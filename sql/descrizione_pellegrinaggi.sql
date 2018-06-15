@@ -1,0 +1,1 @@
+load data local infile '../source_data/elenco_pellegrinaggi.csv' INTO TABLE descrizione_pellegrinaggio FIELDS terminated BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES (@col1, @col2, @col3, @col4,@col5) set id_sottosezione=17,id_luogo=(SELECT id FROM luoghi WHERE @col5 like concat('%', descrizione ,'%')), descrizione=TRIM(@col5), id_ori=@col2;

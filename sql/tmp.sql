@@ -1,0 +1,1 @@
+load data local infile '../source_data/elenco_pellegrinaggi.csv' INTO TABLE temporary_pell FIELDS terminated BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES (@col1, @col2, @col3, @col4, @col5) set anno=@col1, id_ori=@col2, des=trim(@col5);

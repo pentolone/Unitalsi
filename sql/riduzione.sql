@@ -1,0 +1,1 @@
+load data local infile '../source_data/riduzioni.csv' INTO TABLE riduzione FIELDS terminated BY ',' LINES TERMINATED BY '\n' (@col1, @col2, @col3) set id_sottosezione=17, descrizione=trim(@col2), costo=@col3, cd_ori=@col1;

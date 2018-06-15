@@ -1,0 +1,434 @@
+<?php
+/****************************************************************************************************
+*
+*  Compila il file word per accompagnato ed accompagnatore
+*
+*	 Richiede https://github.com/PHPOffice/PHPWord
+*
+*  @file compila_word,php
+*  @abstract compila il file word
+*  @author Luca Romano
+*  @version 1.0
+*  @time 2017-07-17
+*  @history first release
+*  
+*  @first 1.0
+*  @since 2017-07-17
+*  @CompatibleAppVer All
+*  @where Monza
+*
+*
+****************************************************************************************************/
+//require "vendor/autoload.php";
+//use DocxMerge\DocxMerge;
+
+require_once("./ms-office/vendor/autoload.php");
+require_once('../php/unitalsi_include_common.php');
+config_timezone();
+setlocale(LC_TIME, 'it');
+// Path dove salvare i template
+$saveTemplatePath = realpath(dirname(__FILE__)) . "/../word_templates/";
+
+// Path dove salvare i file
+$outPath = realpath(dirname(__FILE__)) . "/../doc_output/";
+$wordTemplate = './ms-office/Unitalsi lettera.docx';
+$phpWord = new  PhpOffice\PhpWord\PhpWord();
+$section = $phpWord->createSection();
+$fname=basename(__FILE__);
+$debug=false;
+$index=0;
+$okToProceed=true;
+$date_format=ritorna_data_locale();
+$giorni=array('Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica');
+$oggi=date('d/m/Y');
+
+$templateA='';
+$templateB='';
+
+$ctrA=0;
+$ctrB=0;
+$msg='';
+
+if(($userid = session_check()) == 0)
+    return;
+
+config_timezone();
+$current_user = ritorna_utente();
+$date_format=ritorna_data_locale();
+
+$conn = DB_connect();
+
+  // Check connection
+  if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+  }
+if(!$_POST) { // se NO post allora chiamata errata
+   echo "Chiamata alla funzione errata";
+   return;
+}
+else {
+	
+	// Valori in input
+    $kv = array();
+    foreach ($_POST as $key => $value) {
+                  $kv[] = "$key=$value";
+      
+                   if($debug) {
+                    	 echo $fname . ": KEY = " . $key . '<br>';
+                    	 echo $fname . ": VALUE = " . $value . '<br>';
+                    	 echo $fname . ": INDEX = " . $index . '<br><br>';
+                    	}
+
+                   switch($key) {
+
+      		                      case "id_sottosezione": // id_sottosezione
+      				                        $sqlid_sottosezione = $value;
+      				                        break;
+
+      		                       case "id_prn": // id viaggio / pellegrinaggio
+      					                      $sqlid_attpell= $value;
+      					                       break;
+
+      		                      case "anno": // anno riferimento
+      					                    $sqlanno = $value;
+      				                        break;
+      	
+      		                       default: // OPS!
+      				                        echo "UNKNOWN key = ".$key;
+      				                        return;
+      				                        break;
+      				              }  
+                  $index++;
+                }
+                
+                if($debug)
+                    print_r([$_FILES]);
+
+                // Carico file accompagnatore
+                $templateA = $saveTemplatePath . basename($_FILES['f_accompagnatore']['name']);
+                if (!move_uploaded_file($_FILES['f_accompagnatore']['tmp_name'], $templateA)) {
+                    echo "Caricamento file " . $_FILES['f_accompagnatore']['name'] . " NON riuscito!";
+                    $okToProceed=false;
+                    }
+
+                // Carico file accompagnato
+                $templateB = $saveTemplatePath . basename($_FILES['f_accompagnato']['name']);
+                if (!move_uploaded_file($_FILES['f_accompagnato']['tmp_name'], $templateB)) {
+                    echo "Caricamento file " . $_FILES['f_accompagnato']['name'] . " NON riuscito!";
+                    $okToProceed=false;
+                    }
+}
+
+if(!$okToProceed) // Failed
+    return;
+
+//======= ACCOMPAGNATORI ==========
+// Preparo il documento degli accompagnatori
+$sql = "SELECT DISTINCT anagrafica.id, CONCAT(anagrafica.cognome,' ',anagrafica.nome) nome,
+                          anagrafica.indirizzo,
+                          CONCAT(anagrafica.cap,' ', anagrafica.citta) citta,
+                          SUBSTRING(DATE_FORMAT(attivita_detail.dal,'" . $date_format ."'),1,10) dal,
+                          SUBSTRING(DATE_FORMAT(attivita_detail.al,'" . $date_format ."'),1,10) al,
+                          WEEKDAY(accompagnatori.dal) gPartenza,
+                          WEEKDAY(attivita_detail.al) gArrivo
+             FROM   anagrafica,
+                          attivita_detail,
+                          accompagnatori
+             WHERE  attivita_detail.id_attpell = $sqlid_attpell
+             AND      attivita_detail.id_socio = anagrafica.id
+             AND      accompagnatori.id_accompagnatore = anagrafica.id
+             AND      accompagnatori.id_accompagnatore = attivita_detail.id_socio
+             AND      accompagnatori.id_attpell = $sqlid_attpell
+             ORDER BY 2";
+
+if($debug)
+    echo "$fname: SQL accompagnatori = $sql<br>";
+
+$index=0;
+
+$result = $conn->query($sql);
+while($row = $result->fetch_assoc()) { // Ciclo per gli accompagnatori
+          $document = $phpWord->loadTemplate($templateA);
+          //$section->addObject($document);
+          
+          if($index == 0) { // Creo la directory col numero di Viaggio/Pellegrinaggio e avvio la transazione ed elimino i dati
+              $conn->query('begin');
+              $conn->query("DELETE FROM lettere WHERE id_attpell = $sqlid_attpell");
+
+             $fA = $outPath . $sqlid_attpell . "/" . "accompagnatori";
+          	if (!file_exists($fA)) {
+                  mkdir($fA, 0777, true);
+                 }
+
+              }
+           // Today
+           $document->setValue('Oggi', $oggi);
+
+           // Destinatario
+          $document->setValue('Destinatario', $row["nome"]);
+          $document->setValue('Indirizzo', $row["indirizzo"]);
+          $document->setValue('Citta', $row["citta"]);
+          $document->setValue('Partenza', $giorni[$row["gPartenza"]] . " " . $row["dal"]);
+          $document->setValue('Arrivo', $giorni[$row["gArrivo"]] . " " . $row["al"]);
+
+          // Verifico eventuali mezzi Associati  
+          $sql = "SELECT mezzi_disponibili.descrizione
+                       FROM   mezzi_disponibili,
+                                    mezzi_detail
+                       WHERE  mezzi_detail.id_mezzo = mezzi_disponibili.id
+                       AND      mezzi_detail.id_attpell  = $sqlid_attpell
+                       AND      mezzi_detail.id_socio    = " . $row["id"] .
+                     " ORDER BY data_viaggio";
+          if($debug)
+             echo "$fname: SQL mezzi = $sql<br>";
+                                    
+          $i = 1;        
+          $result1 = $conn->query($sql);
+          while($row1 = $result1->fetch_assoc()) { // Ciclo per i mezzi associati
+                    if($i==1)
+                       $document->setValue('MezzoA', $row1["descrizione"]);
+                    else
+                       $document->setValue('MezzoR', $row1["descrizione"]);
+                    $i++;
+                   }
+
+          while($i <= 2) {
+                    if($i==1)
+           	           $document->setValue('MezzoA', 'Non assegnato');
+                     else 
+           	           $document->setValue('MezzoR', 'Non assegnato');
+           	        $i++;
+                    }
+          // Verifico se ha la camera assegnata
+          $sql = "SELECT AL_camere.codice,
+                                   AL_piani.descrizione
+                       FROM   AL_camere,
+                                    AL_piani,
+                                    AL_occupazione
+                       WHERE  AL_camere.id_piano = AL_piani.id
+                       AND      AL_camere.id = AL_occupazione.id_camera
+                       AND      AL_occupazione.id_attpell  = $sqlid_attpell
+                       AND      AL_occupazione.id_socio    = " . $row["id"];
+                     
+          if($debug)
+             echo "$fname: SQL camera = $sql<br>";
+          $result1 = $conn->query($sql);
+          
+          if($result1->num_rows > 0) {
+          	 $row1 = $result1->fetch_assoc();
+              $document->setValue('Camera', $row1["codice"] . " - " . $row1["descrizione"]);    
+             }
+           else
+              $document->setValue('Camera', 'Non assegnata');
+             
+          // Ciclo per gli accompagnati
+          $sql = "SELECT DISTINCT anagrafica.id, CONCAT(anagrafica.cognome,' ',anagrafica.nome) nome,
+                                                    anagrafica.indirizzo,
+                                                    CONCAT(anagrafica.cap,' ', anagrafica.citta) citta,
+                                                    SUBSTRING(DATE_FORMAT(attivita_detail.dal,'" . $date_format ."'),1,10) dal,
+                                                    SUBSTRING(DATE_FORMAT(attivita_detail.al,'" . $date_format ."'),1,10) al,
+                                                    anagrafica.telefono,
+                                                    anagrafica.cellulare
+                          
+                       FROM   anagrafica,
+                                    attivita_detail,
+                                    accompagnatori
+                       WHERE  attivita_detail.id_attpell = $sqlid_attpell
+                       AND      attivita_detail.id_socio = accompagnatori.id_accompagnato
+                       AND      accompagnatori.id_accompagnato = anagrafica.id
+                       AND      accompagnatori.id_accompagnatore = " . $row["id"] .
+                     " AND      accompagnatori.id_attpell = $sqlid_attpell
+                       ORDER BY 2";
+          if($debug)
+             echo "$fname: SQL accompagnati = $sql<br>";
+
+          $i=1;
+          $result1 = $conn->query($sql);
+          while($row1 = $result1->fetch_assoc()) { // Ciclo per gli accompagnati
+                    $document->setValue('Acc0' . $i, $row1["nome"] . " Dal: " . $row1["dal"] . " Al: " . $row1["al"] . " Tel. " . $row1["telefono"] . " - Cell." . $row1["cellulare"]);
+                    $document->setValue('Ind0' . $i, $row1["indirizzo"] . " - " . $row1["citta"]);
+                    $i++;
+                   }
+
+           while($i <= 3) {
+           	        $document->setValue('Acc0' . $i, ' ');
+           	        $document->setValue('Ind0' . $i, ' ');
+           	        $i++;
+                    }
+
+// Inserisco nel DB
+          $fileName=$row["nome"] . '.docx';
+          $sql = "INSERT INTO lettere(id_attpell, id_socio, accompagnatore, path, filename, utente)
+                       VALUES($sqlid_attpell, " . $row["id"] . ", 1, '../doc_output', '" . $fileName . "', '" . $conn->real_escape_string($current_user) . "')";
+          $conn->query($sql);
+          //echo $sql;
+// Salvo il documento
+          unlink($fA . '/' . $fileName);
+          $document->saveAs($fA . '/' . $fileName);
+          $index++;
+          $ctrA++;
+	     }
+//======= FINE ACCOMPAGNATORI ==========         
+
+//======= ACCOMPAGNATI ==========
+// Preparo il documento degli accompagnati
+$sql = "SELECT DISTINCT anagrafica.id, CONCAT(anagrafica.cognome,' ',anagrafica.nome) nome,
+                          anagrafica.indirizzo,
+                          CONCAT(anagrafica.cap,' ', anagrafica.citta) citta,
+                          SUBSTRING(DATE_FORMAT(attivita_detail.dal,'" . $date_format ."'),1,10) dal,
+                          SUBSTRING(DATE_FORMAT(accompagnatori.al,'" . $date_format ."'),1,10) al,
+                          WEEKDAY(attivita_detail.dal) gPartenza,
+                          WEEKDAY(attivita_detail.al) gArrivo
+             FROM   anagrafica,                         
+                          attivita_detail,
+                          accompagnatori
+             WHERE  attivita_detail.id_attpell = $sqlid_attpell
+             AND      attivita_detail.id_socio = anagrafica.id
+             AND      accompagnatori.id_accompagnato = anagrafica.id
+             AND      accompagnatori.id_accompagnato = attivita_detail.id_socio
+             AND      accompagnatori.id_attpell = attivita_detail.id_attpell
+             ORDER BY 2";
+
+if($debug)
+    echo "$fname: SQL accompagnati = $sql<br>";
+
+$index=0;
+
+$result = $conn->query($sql);
+while($row = $result->fetch_assoc()) { // Ciclo per gli accompagnati
+          $document = $phpWord->loadTemplate($templateB);
+          //$section->addObject($document);
+          
+          if($index == 0) { // Creo la directory col numero di Viaggio/Pellegrinaggio 
+
+             $fB = $outPath . $sqlid_attpell . "/" . "accompagnati";
+          	if (!file_exists($fB)) {
+                  mkdir($fB, 0777, true);
+                 }
+
+              }
+           // Today
+           $document->setValue('Oggi', $oggi);
+
+           // Destinatario
+          $document->setValue('Destinatario', $row["nome"]);
+          $document->setValue('Indirizzo', $row["indirizzo"]);
+          $document->setValue('Citta', $row["citta"]);
+          $document->setValue('Partenza', $giorni[$row["gPartenza"]] . " " . $row["dal"]);
+          $document->setValue('Arrivo', $giorni[$row["gArrivo"]] . " " . $row["al"]);
+
+          // Verifico eventuali mezzi Associati  
+          $sql = "SELECT mezzi_disponibili.descrizione
+                       FROM   mezzi_disponibili,
+                                    mezzi_detail
+                       WHERE  mezzi_detail.id_mezzo = mezzi_disponibili.id
+                       AND      mezzi_detail.id_attpell  = $sqlid_attpell
+                       AND      mezzi_detail.id_socio    = " . $row["id"] .
+                     " ORDER BY data_viaggio";
+          if($debug)
+             echo "$fname: SQL mezzi = $sql<br>";
+                                    
+          $i = 1;        
+          $result1 = $conn->query($sql);
+          while($row1 = $result1->fetch_assoc()) { // Ciclo per i mezzi associati
+                    if($i==1)
+                       $document->setValue('MezzoA', $row1["descrizione"]);
+                    else
+                       $document->setValue('MezzoR', $row1["descrizione"]);
+                    $i++;
+                   }
+
+          while($i <= 2) {
+                    if($i==1)
+           	           $document->setValue('MezzoA', 'Non assegnato');
+                     else 
+           	           $document->setValue('MezzoR', 'Non assegnato');
+           	        $i++;
+                    }
+          // Verifico se ha la camera assegnata
+          $sql = "SELECT AL_camere.codice,
+                                   AL_piani.descrizione
+                       FROM   AL_camere,
+                                    AL_piani,
+                                    AL_occupazione
+                       WHERE  AL_camere.id_piano = AL_piani.id
+                       AND      AL_camere.id = AL_occupazione.id_camera
+                       AND      AL_occupazione.id_attpell  = $sqlid_attpell
+                       AND      AL_occupazione.id_socio    = " . $row["id"];
+                     
+          if($debug)
+             echo "$fname: SQL camera = $sql<br>";
+          $result1 = $conn->query($sql);
+          
+          if($result1->num_rows > 0) {
+          	 $row1 = $result1->fetch_assoc();
+              $document->setValue('Camera', $row1["codice"] . " - " . $row1["descrizione"]);    
+             }
+           else
+              $document->setValue('Camera', 'Non assegnata');
+             
+          // Ciclo per gli accompagnatori
+          $sql = "SELECT DISTINCT anagrafica.id, CONCAT(anagrafica.cognome,' ',anagrafica.nome) nome,
+                                                    anagrafica.indirizzo,
+                                                    CONCAT(anagrafica.cap,' ', anagrafica.citta) citta,
+                                                    SUBSTRING(DATE_FORMAT(attivita_detail.dal,'" . $date_format ."'),1,10) dal,
+                                                    SUBSTRING(DATE_FORMAT(attivita_detail.al,'" . $date_format ."'),1,10) al,
+                                                    anagrafica.telefono,
+                                                    anagrafica.cellulare
+                          
+                       FROM   anagrafica,
+                                    
+                                    attivita_detail,
+                                    accompagnatori
+                       WHERE  attivita_detail.id_attpell = $sqlid_attpell
+                       AND      attivita_detail.id_socio = anagrafica.id
+                       AND      accompagnatori.id_accompagnatore = anagrafica.id
+                       AND      accompagnatori.id_accompagnato = " . $row["id"] .
+                     " AND      accompagnatori.id_attpell = $sqlid_attpell
+                       ORDER BY 2";
+          if($debug)
+             echo "$fname: SQL accompagnatori = $sql<br>";
+
+          $i=1;
+          $result1 = $conn->query($sql);
+          while($row1 = $result1->fetch_assoc()) { // Ciclo per gli accompagnati
+                    $document->setValue('Acc0' . $i, $row1["nome"] . " Dal: " . $row1["dal"] . " Al: " . $row1["al"] . " Tel. " . $row1["telefono"] . " - Cell." . $row1["cellulare"]);
+                    $document->setValue('Ind0' . $i, $row1["indirizzo"] . " - " . $row1["citta"]);
+                    $i++;
+                   }
+
+           while($i <= 3) {
+           	        $document->setValue('Acc0' . $i, ' ');
+           	        $document->setValue('Ind0' . $i, ' ');
+           	        $i++;
+                    }
+
+// Inserisco nel DB
+          $fileName=$row["nome"] . '.docx';
+          $sql = "INSERT INTO lettere(id_attpell, id_socio, accompagnatore, path, filename, utente)
+                       VALUES($sqlid_attpell, " . $row["id"] . ", 0, '../doc_output', '" . $fileName . "', '" . $conn->real_escape_string($current_user) . "')";
+          $conn->query($sql);
+          //echo $sql;
+// Salvo il documento
+          unlink($fB. '/' . $fileName);
+          $document->saveAs($fB . '/' . $fileName);
+          $index++;
+          $ctrB++;
+	     }
+	     $conn->query('commit');
+	     $tot = $ctrA+$ctrB;
+	     $msg="Totale file generati $tot";
+//======= FINE ACCOMPAGNATORI ==========   
+
+// Ricarico la form
+    	  echo "<form id='ok' name='ok' action='../php/q_compila_word.php' method='post'>";
+    	  echo "<input type='hidden' name='msg' value='" . $msg . "'>";
+    	  echo "<input type='hidden' name='id_sottosezione' value=" . $sqlid_sottosezione . ">";
+    	  echo "<input type='hidden' name='anno' value=" . $sqlanno . ">";
+    	  echo "<input type='hidden' name='id_prn' value=" . $sqlid_attpell . ">";
+    	  echo "</form>";
+    	  
+    	  if(!$debug)
+        echo "<script type='text/javascript'>document.forms['ok'].submit();</script>"; 
+      
+?>

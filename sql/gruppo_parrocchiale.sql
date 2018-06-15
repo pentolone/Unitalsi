@@ -1,0 +1,1 @@
+load data local infile '../source_data/gruppo_parrocchiale.csv' INTO TABLE gruppo_parrocchiale FIELDS terminated BY ',' LINES TERMINATED BY '\n' (@col1, @col2, @col3) set id_ori=@col2, id_sottosezione=@col1, descrizione=TRIM(@col3);

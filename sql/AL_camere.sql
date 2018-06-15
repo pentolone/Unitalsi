@@ -1,0 +1,1 @@
+load data local infile '../source_data/composizione_camere.csv' INTO TABLE AL_camere FIELDS terminated BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES (@col1, @col2, @col3) set codice=@col1, n_posti=@col2, id_piano=(SELECT id from AL_piani WHERE codice = @col3);

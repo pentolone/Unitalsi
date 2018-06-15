@@ -1,0 +1,307 @@
+<?php
+/****************************************************************************************************
+*
+*  Stampa il riepilogo occupazione delle camere
+*	- id struttura
+*	- stringa dal al
+*	- array camere/occupazione
+*
+*  @file stampa_riepilogo_occupazione.php
+*  @abstract Genera file PDF con lìoccupazione delle camere
+*  @author Luca Romano
+*  @version 1.0
+*  @since 2017-10-10
+*  @where Monza
+*
+*
+****************************************************************************************************/
+include_once('../php/unitalsi_include_common.php');
+define("MYPDF_MARGIN_TOP", 35);
+define('BORDER_REQUIRED', 0); // 0 = No borders, 1 = Borders
+define('NRICEVUTA_LENGTH', 33);
+define('IMPORTO_LENGTH', 17);
+define('MYPDF_MARGIN_LEFT',4);
+define('MYPDF_MARGIN_RIGHT',4);
+define('CELLDAYWIDTH', 10);
+define('CELLDAYHEIGHT', 4);
+
+	$debug=false;
+   $fname=basename(__FILE__);
+	$root = realpath($_SERVER["DOCUMENT_ROOT"]);
+    include $root . "/tcpdf/tcpdf.php";
+// Titolo
+$logo='Logo_UNITALSI.jpg';
+$logoStruttura='Logo_UNITALSI.jpg';
+$sqlid_struttura=0;
+$dalal=null;
+$camere=array();
+
+// Database connect
+$conn = DB_connect();
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// POST data
+$index=0;
+if(!$_POST) { // se NO post allora chiamata errata
+   echo "Chiamata alla funzione errata";
+   return;
+}
+else  {
+    $kv = array();
+    foreach ($_POST as $key => $value) {
+                  $kv[] = "$key=$value";
+      
+                   if($debug) {
+                    	 echo $fname . ": KEY = " . $key . '<br>';
+                    	 echo $fname . ": VALUE = " . $value . '<br>';
+                    	 echo $fname . ": INDEX = " . $index . '<br><br>';
+                    	}
+
+                   switch($key) {
+      		                      case "id_struttura": // id della struttura
+      				                        $sqlid_struttura = $value;
+      				                        break;
+
+      		                       case "dalal": // Intervallo di date
+      					                      $dalal = $value;
+      					                       break;
+
+      		                       case "camere": // array camere/occupazione
+      					                     $camere= unserialize($value);
+      				                         break;
+
+      		                       default: // OPS!
+      				                        echo "UNKNOWN key = ".$key;
+      				                        return;
+      				                        break;
+      				              }  
+                  $index++;
+                }
+	
+} 
+// SQL per struttura
+$sqlS = "SELECT AL_struttura.nome
+               FROM   AL_struttura
+               WHERE AL_struttura.id = $sqlid_struttura";   
+if($debug)
+    echo "$fname SQL Struttura = $sqlS<br>";
+
+$result = $conn->query($sqlS);
+$row = $result->fetch_assoc();
+
+$subintestazione = "Riepilogo occupazione camere struttura ". $row["nome"]  .$dalal;
+
+// TCPDF class
+class MYPDF extends TCPDF {
+	private $par;
+	protected $subintestazione;
+	protected $addH=array();
+   private $i=0;
+	
+	function __construct( $par, $subIntestazione, $orientation, $unit, $format ) 
+    {
+        parent::__construct( $orientation, $unit, $format, false, 'UTF-8', false );
+
+        $this->par = $par;
+        $this->subintestazione = $subIntestazione;
+        //...
+    }
+    public function setAdditionalH($additionalH)
+    {
+    	$this->addH = $additionalH;
+    }
+    // Page header
+    public function Header() {
+    	 $ll;
+       $headerData = $this->getHeaderData();
+       $this->SetX(8);
+       $this->SetY(8);
+       $this->Image('/images/Logo_UNITALSI.jpg', '', '', 20); // Logo UNITALSI
+       $this->Image('/images/Logo Borghetto.jpg', 263,'', 30); // Logo Struttura
+  
+       $this->SetY(12);
+       $this->SetFont('helvetica', 'B', '13px');
+       $this->Cell(0, 15, $headerData['title'], 0, true, 'C', 0, '', 0, false, 'M', 'M');
+
+       $this->SetFont('helvetica', 'B', '10px');
+       $this->Cell(0, 15, $headerData['string'], 0, false, 'C', 0, '', 0, false, 'M', 'M');
+                     
+       $this->SetY(25);
+       $this->SetFont('helvetica', 'BI', '10px');
+       $this->Cell(0, 0, $this->subintestazione, 0, false, 'C', 0, '', 0, false, 'M', 'M');
+       $this->SetY(30);
+       $this->writeHTML('<hr>');
+
+       $this->SetY(31);
+       $this->Cell(55,0,' ', 0, 0, 'C');
+       $ll = $this->GetPageWidth();
+       for($i=0; $i < count($this->addH) && $this->getX() < ($ll - MYPDF_MARGIN_RIGHT - CELLDAYWIDTH);$i++) {
+       	   $this->Cell(CELLDAYWIDTH,0,$this->addH[$i], 0, 0, 'C');
+       	}          
+       
+    }
+
+    // Page footer
+    public function Footer() {
+    	  $foot = $this->par . ' Pagina ';
+        // Position at 15 mm from bottom
+        $this->SetY(-15);
+        // Set font
+        $this->SetFont('helvetica', '', '6px');
+        // Page number
+        $this->Cell(0, 10, $foot . $this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'R', 0, '', 0, false, 'T', 'M');
+    }
+}
+// Fine class TCPDF
+// SQL per sottosezione
+$sqlH = "SELECT CONCAT(sezione.nome,' - Sottosezione di ',sottosezione.nome) nome,
+                            CONCAT(sottosezione.cap,' ', sottosezione.citta,
+                                          ' (', province.sigla, ') - ', sottosezione.indirizzo,' - Tel. ',
+                                          IFNULL(sottosezione.telefono,'*'), ' - Fax ', IFNULL(sottosezione.fax,'*')) indirizzo,
+                                          sottosezione.id id
+               FROM   sezione, sottosezione, province
+               WHERE sottosezione.id_provincia = province.id
+               AND     sezione.id = sottosezione.id_sezione
+               AND     sottosezione.id IN(SELECT AL_struttura.id_sottosezione
+                                                        FROM  AL_struttura
+                                                        WHERE AL_struttura.id = $sqlid_struttura)";
+
+if($debug)
+    echo "$fname SQL Intestazione = $sqlH<br>";
+
+$result = $conn->query($sqlH);
+$row = $result->fetch_assoc();
+$pdfH = $row["nome"];
+$pdfH1 = $row["indirizzo"];
+
+
+$pdf = new MYPDF('Stampa riepilogo occupazione (Rev 1.0) Generato il: ' . date('d/m/Y H:i:s') ,$subintestazione, 'L', PDF_UNIT, PDF_PAGE_FORMAT, false, 'UTF-8', false);
+
+// set document information
+$pdf->SetCreator(PDF_CREATOR);
+$pdf->SetAuthor('Luca Romano');
+$pdf->SetTitle('Riepilogo occupazione camere (pronto per la stampa)');
+$pdf->SetSubject('Riepilogo occupazione');
+$pdf->SetKeywords('Riepilogo occupazione');
+
+// set default header data
+$pdf->SetHeaderData($logo, PDF_HEADER_LOGO_WIDTH, $pdfH, $pdfH1, array(0,64,0), array(0,64,128));
+$pdf->setFooterData(array(0,64,0), array(0,64,128));
+
+// set header and footer fonts
+$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+$pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+// set default monospaced font
+$pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+// set margins
+$pdf->SetMargins(MYPDF_MARGIN_LEFT, MYPDF_MARGIN_TOP, MYPDF_MARGIN_RIGHT);
+$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+// set auto page breaks
+$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+// set image scale factor
+$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+// set some language-dependent strings (optional)
+if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
+    require_once(dirname(__FILE__).'/lang/eng.php');
+    $pdf->setLanguageArray($l);
+}
+
+// ---------------------------------------------------------
+
+// set default font subsetting mode
+$pdf->setFontSubsetting(true);
+
+// Preparo sub Intestazione
+
+$additionalH=array(); // Additional Header data
+for($i =0; $i < count($camere[0]["giorni"]); $i++) {
+	   $additionalH[$i] = $camere[0]["giorni"][$i]["day"];
+      }
+
+$pdf->setAdditionalH($additionalH);
+// Ciclo per l'array delle camere
+
+$old_piano=0;
+$page=0;
+$pageWidth = $pdf->GetPageWidth();
+
+for($ix = 0; $ix < count($camere); $ix++) {
+	   if($ix == 0) {
+	   	   $pdf->addPage();
+	      }
+       $textRoom = null;
+       $pdf->SetFont('helvetica', 'BI', '10px');
+	    if($camere[$ix]["id_piano"] != $old_piano) {
+	    	 $textRoom = " -> " . $camere[$ix]["piano"];
+	       $old_piano = $camere[$ix]["id_piano"];
+	       }
+	   $text =  $camere[$ix]["camera"] .  "  (#" . $camere[$ix]["posti"]. ")";
+	   $pdf->Cell(15, 4, $text, 0, 0, 'L' );
+
+	    if($pdf->GetPage() != $page) {
+	    	 $textRoom = " -> " . $camere[$ix]["piano"];
+	    	 $page = $pdf->GetPage();
+	    	}
+	       
+	   if($textRoom) {
+	       $pdf->Cell(40, CELLDAYHEIGHT, $textRoom, 0, 0, 'L' );
+	      }
+	   else {
+	       $pdf->Cell(40, CELLDAYHEIGHT,' ', 0, 0, 'L' );
+	   	 }
+	   // Ciclo per i giorni
+	   for($i=0; $i < count($camere[$ix]["giorni"]) && $pdf->getX() < ($pageWidth - MYPDF_MARGIN_RIGHT - CELLDAYWIDTH); $i++) {
+          	//echo "<td style='text-align: center; background-color: " . $color_status[$camere[$ix]["giorni"][$i]["status"]] . ";'>" . $camere[$ix]["giorni"][$i]["occupanti"] . "</td>";
+             $text = ' ';
+          	if($camere[$ix]["giorni"][$i]["occupanti"] > 0)
+          	    $text = $camere[$ix]["giorni"][$i]["occupanti"] . " (" . ($camere[$ix]["posti"] - $camere[$ix]["giorni"][$i]["occupanti"]) . ")"; 
+	          $pdf->Cell(CELLDAYWIDTH, CELLDAYHEIGHT, $text, 1, 0, 'C' );
+	          $y = $pdf->getY();
+	          $x = $pdf->getX();
+          	
+          	switch($camere[$ix]["giorni"][$i]["status"]) {
+          		         case "free":
+          		                  break; // Nothing to do
+
+          		         case "occupied":
+          		                 $xStart = $x - CELLDAYWIDTH;
+          		                 $yStart = $y + CELLDAYHEIGHT;
+ 
+          		                 $xEnd = $x;
+          		                 $yEnd = $y;
+          		                 $pdf->Line($xStart, $yStart, $xEnd, $yEnd);
+          		                 break;
+
+          		         case "full":
+          		                 $xStart = $x - CELLDAYWIDTH;
+          		                 $yStart = $y + CELLDAYHEIGHT;
+
+          		                 $xEnd = $x;
+          		                 $yEnd = $y;
+
+          		                 $xStart1 = $x;
+          		                 $yStart1 = $y + CELLDAYHEIGHT;
+
+          		                 $xEnd1 = $x - CELLDAYWIDTH;
+          		                 $yEnd1 = $y;
+          		                 $pdf->Line($xStart, $yStart, $xEnd, $yEnd);
+          		                 $pdf->Line($xStart1, $yStart1, $xEnd1, $yEnd1);
+          		                 break;
+          	           } // End switch
+           }
+        $pdf->Ln();
+
+     }
+$pdf->Output('Stampa_riepilogo_occupazione.pdf', 'I');
+
+?>

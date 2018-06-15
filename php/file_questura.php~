@@ -1,0 +1,761 @@
+<?php
+require_once('../php/unitalsi_include_common.php');
+if(!check_key())
+   return;
+?>
+<html>
+<head>
+   <title>Generazione file per P.S.</title>
+  <LINK href="../css/unitalsi.css" rel="stylesheet" type="text/css">
+  <meta charset="ISO-8859-1">
+  <meta name="author" content="Luca Romano" >
+
+  <script type="text/javascript" src="../js/messaggi.js"></script>
+  <script type="text/javascript" src="../js/searchTyping.js"></script>
+  <link rel="apple-touch-icon" sizes="57x57" href="/images/fava/apple-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="/images/fava/apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="/images/fava/apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/images/fava/apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="/images/fava/apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="/images/fava/apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="/images/fava/apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/images/fava/apple-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/fava/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192"  href="/images/fava/android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/fava/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="/images/fava/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/fava/favicon-16x16.png">
+  <link rel="manifest" href="/images/fava/manifest.json">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-TileImage" content="/images/fava/ms-icon-144x144.png">
+  <meta name="theme-color" content="#ffffff">  
+</head>
+<body>
+
+<?php
+/****************************************************************************************************
+*
+*  Genera il file da inviare alla questura con l'elenco degli ospiti della struttura
+*
+*  @file file_questura.php
+*  @abstract Genera file P.S.
+*  @author Luca Romano
+*  @version 1.0
+*  @time 2017-03-20
+*  @history prima versione
+*  
+*  @first 1.0
+*  @since 2017-03-20
+*  @CompatibleAppVer All
+*  @where Monza
+*
+****************************************************************************************************/
+define("PS_RESPONSABILE", 18); // Codice PS Capogruppo
+define("PS_MEMBRO", 20); // Codice PS Membro gruppo
+
+$debug=false;
+$fname=basename(__FILE__);
+$defCharset = ritorna_charset(); 
+$defCharsetFlags = ritorna_default_flags(); 
+$sott_app = ritorna_sottosezione_pertinenza();
+$multisottosezione = ritorna_multisottosezione();
+$date_format=ritorna_data_locale();
+$current_user = ritorna_utente();
+
+$index=0;
+$update = false;
+$redirect="../php/file_questura.php";
+$ctrError=0;
+$ctrBlock=0;
+
+$sqlid_struttura=0;
+$oggi=date('Y-m-d');
+$go=false;
+$sqlID_capogruppo=0; // ID del capogruppo
+// Array per creare il file P.S.
+$IDanagrafica=array();
+$PS_tipoAlloggio=array();
+$PS_sesso=array();
+$PS_permanenza=array();
+$PS_cognome=array();
+$PS_comuni=array();
+$PS_nazioni=array();
+$PS_cittadinanza=array();
+$PS_nome=array();
+$PS_data_nas=array();
+$PS_sigla=array();
+$PS_doc=array();
+$PS_n_doc=array();
+$PS_comuni_doc=array();
+
+
+$sqlid_sottosezione = $sott_app;
+$sqlselect_struttura = "SELECT id, AL_struttura.nome
+                                      FROM   AL_struttura";
+                                      
+$sqlselect_sottosezione = "SELECT id, nome
+                                             FROM   sottosezione";
+
+if(!$multisottosezione) {
+   $sqlselect_sottosezione .= " WHERE id_sottosezione = " . $sott_app; 
+ }
+$sqlselect_sottosezione .= " ORDER BY 2";
+
+if(($userid = session_check()) == 0)
+    return;
+$conn = DB_connect();
+
+  // Check connection
+  if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+  }
+// Verifica abilitazioni utente
+$authMask = ritorna_abilitazioni($conn);
+
+$ctrAuth=0;
+foreach ($authMask as $key => $value) {
+               if($debug) { // Visualizzo autorizzazioni
+                   echo "$fname Auth -> $key = $value<br>";
+                  } // end foreach
+               $ctrAuth += $value; // Controllo autorizzazioni
+   }
+// Fine verifica abilitazioni
+
+  if ($_POST) { // se post allora ho modificato i valori di selezione
+
+      $kv = array();
+      foreach ($_POST as $key => $value) {
+    	            if(is_array($value)) {
+    	            	   if($debug)
+    	            	       print_r($value);
+ 
+    	            	   switch($key) { // Carico i valori negli array
+    	            	         case "id_ana": // ID anagrafica
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  $IDanagrafica[$i_array] = $value1; 	
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	         case "PS_tipoAlloggio":
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  $PS_tipoAlloggio[$i_array] = $value1; 	
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	         case "sesso":
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  if($value1 == 'M')
+                                                      $PS_sesso[$i_array] = 1;
+
+                                                  if($value1 == 'F')
+                                                      $PS_sesso[$i_array] = 2;
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	         case "permanenza":
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  $PS_permanenza[$i_array] = $value1; 	
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	         case "cognome":
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  $PS_cognome[$i_array] = $value1; 	
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	         case "nome":
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  $PS_nome[$i_array] = $value1; 	
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	         case "dt_nas":
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  $PS_data_nas[$i_array] = $value1; 	
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	         case "PS_comuni":
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  $PS_comuni[$i_array] = $value1; 	
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	         case "PS_nazioni":
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  $PS_nazioni[$i_array] = $value1; 	
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	         case "PS_cittadinanza":
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  $PS_cittadinanza[$i_array] = $value1; 	
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	         case "PS_sigla":
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  $PS_sigla[$i_array] = $value1; 	
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	         case "PS_doc":
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  $PS_doc[$i_array] = $value1; 	
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	         case "PS_n_doc":
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  $PS_n_doc[$i_array] = $value1; 	
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	         case "PS_comuni_doc":
+    	            	                  $i_array=0;
+      		                           foreach($value as $value1) { // Carico array 
+                                                  $PS_comuni_doc[$i_array] = $value1; 	
+                                                  $i_array++;
+                 	                              }
+    	            	                  break;
+
+    	            	   }
+    	            	 }
+    	            else
+                    $kv[] = "$key=$value";
+
+                     switch($key) {
+      		                     case "id_sottosezione": // sottosezione
+      					                    $sqlid_sottosezione = $value;
+      					                    break;
+
+      		                     case "id_struttura": // struttura
+      					                    $sqlid_struttura = $value;
+      					                    break;
+
+      		                     case "oggi": // data
+      					                    $oggi = $value;
+      					                    break;
+
+      		                     case "id_capogruppo": // Responsabile
+      					                    $sqlID_capogruppo = $value;
+      					                    break;
+
+      		                     case "go": // Prepara file OK
+      					                    $go = $value;
+      					                    break;
+                    }
+                  }
+     }
+  disegna_menu();
+  echo "<div class='background' style='position: absolute; top: 100px;'>";
+
+// verifica autorizzazioni  
+  if($ctrAuth == 0) { // Utente non abilitato
+     echo "<h2>Utente non abilitato alla funzione richiesta</h2>";
+     echo "</div>";
+     echo "</body></html>";
+     return;
+     }
+
+  $sqlselect_struttura .= " WHERE id_sottosezione = " . $sqlid_sottosezione .
+                                        " ORDER BY 2";
+  $desc_sottosezione = ritorna_sottosezione_pertinenza_des($conn, $sqlid_sottosezione); 
+  
+  echo "<table>";
+  echo "<tr>";
+  echo "<td colspan='2' class='titolo'>Generazione file per P.S.</td>";
+  echo "</tr>";
+
+  echo "<form action='" . $redirect . "' method='POST'>";
+  echo "<tr>";
+  echo "<td><p class='required'>Sottosezione</p></td>";
+  if(!$multisottosezione) {
+  	   echo "<input type='hidden' name='id_sottosezione' value=" . $sott_app . ">";
+      echo "<td><p class='requilred>" .  htmlentities($desc_sottosezione, $defCharsetFlags, $defCharset) ."</p></td>";
+     }
+  else { 
+      echo "<td><select class='required' name='id_sottosezione' onChange='this.form.submit();' required>" ;
+      $result = $conn->query($sqlselect_sottosezione);
+      while($row = $result->fetch_assoc()) {
+       	       echo "<option value=" . $row["id"];
+                 if($row["id"] == $sqlid_sottosezione)  {
+   	    	    echo " selected";
+             } 	
+       	   echo ">" . htmlentities($row["nome"],$defCharsetFlags, $defCharset) . "</option>";
+       	}
+       echo '</select></td>'; 
+     }
+  echo "</tr>";
+  echo "</form>";
+
+  echo "<form action='" . $redirect . "' method='POST'>";
+  echo "<input type='hidden' name='id_sottosezione' value=" . $sqlid_sottosezione . ">";
+  echo "<tr>";
+  echo "<td><p class='required'>Struttura</p></td>";
+  echo "<td><select class='required' name='id_struttura' onChange='this.form.submit();'>" ;
+  echo "<option value=>--- Seleziona la struttura ---</option>";
+  $result = $conn->query($sqlselect_struttura);
+  while($row = $result->fetch_assoc()) {
+            echo "<option value=" . $row["id"];
+             if($row["id"] == $sqlid_struttura)  {
+	    	       echo " selected";
+             } 	
+       	   echo ">" . htmlentities($row["nome"],$defCharsetFlags, $defCharset) . "</option>";
+       	}
+   echo '</select></td>';
+   echo "</tr>"; 
+   echo "</form>";
+
+   if($sqlid_struttura > 0 && $sqlID_capogruppo == 0) { // Seleziono il capogruppo   
+      echo "<form action='" . $redirect . "' method='POST'>";
+      echo "<input type='hidden' name='id_sottosezione' value=" . $sqlid_sottosezione . ">";
+      echo "<input type='hidden' name='id_struttura' value=" . $sqlid_struttura . ">";
+
+      echo "<tr>";
+   	   echo "<td><p class='required'>Data</p></td>";
+   	   echo "<td><p><input class='required' type='date' name='oggi' value='" . $oggi . "' required onChange='this.form.submit();'></td>";
+   	   echo "</tr>";
+
+      $sql = "SELECT anagrafica.id, CONCAT(anagrafica.cognome,' ', anagrafica.nome) nome,
+                               servizio.descrizione
+                   FROM   anagrafica,
+                               attivita_detail
+                   LEFT JOIN servizio ON
+                   attivita_detail.id_servizio = servizio.id,
+                                AL_occupazione
+                   WHERE  AL_occupazione.id_socio = anagrafica.id
+                   AND      AL_occupazione.dal BETWEEN 
+                                DATE_SUB('" . $oggi . "', INTERVAL 10 DAY)
+                   AND      '" . $oggi ."'
+                   AND      AL_occupazione.al > '" . $oggi . "'
+                   AND      anagrafica.id = attivita_detail.id_socio
+                   AND      attivita_detail.tipo = 'V'
+                   AND      attivita_detail.id_attpell = AL_occupazione.id_attpell
+                   ORDER BY 2";
+      if($debug)
+         echo "$fname: SQL (Responsabile) = $sql<br>";
+      
+      echo "<tr>";
+      echo "<td><p class='required'>Seleziona il responsabile</p></td>";
+      echo "<td><select class='required' name='id_capogruppo' size=10 onChange='this.form.submit();'>";
+
+      $index = 0;
+      $result = $conn->query($sql);
+      while($row = $result->fetch_assoc()) {
+      	          $desSer = 'Nessuno';
+      	          
+      	          if($row["descrizione"])
+      	             $desSer = $row["descrizione"];
+      	          if($index == 0)
+      	              echo "<option disabled>--- Seleziona dalla lista ---</option>";
+      	          $index++;
+      	          echo "<option value=" . $row["id"];
+      	          
+      	          if($sqlID_capogruppo == $row["id"])
+      	             echo " selected";
+      	          echo ">" . htmlentities($row["nome"], $defCharsetFlags, $defCharset) . " Servizio &minus;&gt; " .
+      	                          htmlentities($desSer, $defCharsetFlags, $defCharset) . "</option>";
+      	         } // Fine ciclo
+      	if($index == 0)
+      	   echo "<option disabled>--- Nessun arrivo previsto nella data selezionata ---</option>";
+      echo "</select></td>";
+      echo "</tr>";
+
+      echo "</form>";
+      }
+   
+   if($sqlid_struttura > 0 && $sqlID_capogruppo > 0) { // Carico i dati degli alloggiati
+      echo "<form action='" . $redirect . "' method='POST'>";
+      echo "<input type='hidden' name='id_sottosezione' value=" . $sqlid_sottosezione . ">";
+      echo "<input type='hidden' name='id_struttura' value=" . $sqlid_struttura . ">";
+
+      echo "<tr>";
+   	   echo "<td><p class='required'>Data</p></td>";
+   	   echo "<td><input class='required' type='date' name='oggi' value='" . $oggi . "' required onChange='this.form.submit();'></td>";
+   	   echo "</tr>";
+
+      $sql = "SELECT anagrafica.id, CONCAT(anagrafica.cognome,' ', anagrafica.nome) nome,
+                               servizio.descrizione
+                   FROM   anagrafica,
+                               attivita_detail
+                   LEFT JOIN servizio ON
+                   attivita_detail.id_servizio = servizio.id
+                   WHERE anagrafica.id = attivita_detail.id_socio
+                   AND      attivita_detail.tipo = 'V'
+                   AND      anagrafica.id = $sqlID_capogruppo";
+
+      $r = $conn->query($sql);
+      $rw = $r->fetch_assoc();
+      
+      echo "<tr>";
+   	   echo "<td><p class='required'>Responsabile selezionato</p></td>";
+   	   echo "<td><p class='required'>" . htmlentities($rw["nome"], $defCharsetFlags, $defCharset) . "</p></td>";
+   	   echo "</tr>";
+ 
+   	   echo "</table>";
+   	   echo "</form>";
+
+      $sql = "SELECT 0,SUBSTRING(anagrafica.cognome,1,50) cognome,
+                                SUBSTRING(anagrafica.nome,1,30) nome,
+                                anagrafica.sesso,
+                                SUBSTRING(DATE_FORMAT(anagrafica.data_nascita,'" . $date_format ."'),1,10) dt_nas, 	   
+                                SUBSTRING(DATE_FORMAT(AL_occupazione.dal,'" . $date_format ."'),1,10) arrivo,
+                                DATEDIFF(AL_occupazione.al, '" . $oggi . "')  gg,
+                                anagrafica.luogo_nascita,
+                                anagrafica.id_stato_nascita,
+                                anagrafica.id_cittadinanza,
+                                tipo_documento.codice_PS,
+                                anagrafica.n_doc,
+                                anagrafica.id_luogo_rilascio,
+                                anagrafica.citta,
+                                anagrafica.id,
+                                anagrafica.codice_catastale
+                   FROM   anagrafica,
+                                tipo_documento,
+                                AL_occupazione
+                   WHERE  AL_occupazione.id_socio = anagrafica.id
+                   AND      anagrafica.id_tipo_doc = tipo_documento.id
+                   AND      anagrafica.id = $sqlID_capogruppo
+                   UNION
+                   SELECT 1,SUBSTRING(anagrafica.cognome,1,50) cognome,
+                                SUBSTRING(anagrafica.nome,1,30) nome,
+                                anagrafica.sesso,
+                                SUBSTRING(DATE_FORMAT(anagrafica.data_nascita,'" . $date_format ."'),1,10) dt_nas, 	   
+                                SUBSTRING(DATE_FORMAT(AL_occupazione.dal,'" . $date_format ."'),1,10) arrivo,
+                                DATEDIFF(AL_occupazione.al, AL_occupazione.dal) gg,
+                                anagrafica.luogo_nascita,
+                                anagrafica.id_stato_nascita,
+                                anagrafica.id_cittadinanza,
+                                tipo_documento.codice_PS,
+                                anagrafica.n_doc,
+                                anagrafica.id_luogo_rilascio,
+                                anagrafica.citta,
+                                anagrafica.id,
+                                anagrafica.codice_catastale
+                   FROM   anagrafica,
+                                tipo_documento,
+                                AL_occupazione
+                   WHERE  AL_occupazione.id_socio = anagrafica.id
+                   AND      anagrafica.id_tipo_doc = tipo_documento.id
+                   AND      AL_occupazione.dal = '" . $oggi . "'
+                   AND      anagrafica.id != $sqlID_capogruppo                  
+                   ORDER BY 1, 2, 3";
+      if($debug)
+         echo "$fname: SQL = $sql<br>";
+      
+      $result = $conn->query($sql);
+      $index=0;
+      
+      while($row = $result->fetch_assoc()) {
+      	          $stat='OK';
+      	          $tipoAlloggiato = PS_MEMBRO;
+      	          
+      	          if($index == 0) {
+                    echo "<form action='" . $redirect . "' method='POST'>";
+                    echo "<input type='hidden' name='id_sottosezione' value=" . $sqlid_sottosezione . ">";
+                    echo "<input type='hidden' name='id_struttura' value=" . $sqlid_struttura . ">";
+                    echo "<input type='hidden' name='oggi' value='" . $oggi . "'>";
+                    echo "<br><table><tr>";
+                    echo "<th class='ps'>Tipo Alloggio</th>";
+                    echo "<th class='ps'>Giorni</th>";
+                    echo "<th class='ps'>Cognome</th>";
+                    echo "<th class='ps'>Nome</th>";
+                    echo "<th class='ps'>Sesso</th>";
+                    echo "<th class='ps'>Data nascita</th>";
+                    echo "<th class='ps'>Luogo nascita</th>";
+                    echo "<th class='ps'>Prov</th>";
+                    echo "<th class='ps'>Stato nascita</th>";
+                    echo "<th class='ps'>Cittadinanza</th>";
+                    echo "<th class='ps'>Documento</th>";
+                    echo "<th class='ps'>Numero</th>";
+                    echo "<th class='ps'>Comune Rilascio</th>";
+                    echo "<th class='ps'>OK</th>";
+                    echo "</tr>";
+                    
+                    echo "<tr><td colspan='14'><hr></td></tr>";
+                    $tipoAlloggiato = PS_RESPONSABILE;
+      	             }
+
+                 echo "<input type='hidden' name='id_ana[]' value=" . $row["id"] . ">";
+                 if($index == 1) // Inizio elenco membri gruppo
+                    echo "<tr><td colspan='14'><hr></td></tr>";
+
+      	          echo "<tr>";
+      	          echo "<td class='ps' style='border-style: solid; border-width: 1px; border-color: green;'><select class='search' name='PS_tipoAlloggio[]'>";
+      	          $rAll = $conn->query("SELECT codice_PS, descrizione FROM PS_tipoalloggiato ORDER BY 1");
+      	          while($r = $rAll->fetch_assoc()) {
+      	          	       echo "<option value='" . $r["codice_PS"] ."'";
+      	          	       if($r["codice_PS"] == $tipoAlloggiato)
+      	          	          echo " selected";
+      	          	       echo ">" . $r["descrizione"] . "</option>";
+      	                 }
+      	          echo "</select></p></td>";
+      	          
+      	          echo "<input type='hidden' name='permanenza[]' value='" . sprintf("%02d", $row["gg"]) . "'>";
+      	          echo "<td class='ps' style='text-align: right; border-style: solid; border-width: 1px; border-color: green;'>" . sprintf("%02d", $row["gg"]) . "</td>";
+      	          
+      	          echo "<td class='ps' style='border-style: solid; border-width: 1px; border-color: green;'>";
+      	          echo htmlentities($row["cognome"],$defCharsetFlags, $defCharset);
+      	          echo "<input type='hidden' name='cognome[]' value='" . $row["cognome"] . "'>";
+      	          echo "</td>";
+      	          
+      	          echo "<td class='ps' style='border-style: solid; border-width: 1px; border-color: green;'>";
+      	          echo htmlentities($row["nome"],$defCharsetFlags, $defCharset);
+      	          echo "<input type='hidden' name='nome[]' value='" . $row["nome"] . "'>";
+      	          echo "</td>";
+
+      	          echo "<td class='ps' align='center' style='border-style: solid; border-width: 1px; border-color: green;'>";
+      	          echo $row["sesso"];
+      	          echo "<input type='hidden' name='sesso[]' value='" . $row["sesso"] . "'>";
+      	          echo "</td>";
+
+      	          if($row["dt_nas"] && ($row["dt_nas"] != '00/00/0000'))
+      	             echo "<td class='ps' style='text-align:center; border-style: solid; border-width: 1px; border-color: green;'>";
+      	          else {
+      	             echo "<td class='ps' style='text-align: center; border-style: solid; border-width: 2px; border-color: red;'>";
+      	             $stat = 'CK';
+      	             $ctrError++;
+      	             $ctrBlock++;
+      	             }
+      	          echo $row["dt_nas"];
+      	          echo "<input type='hidden' name='dt_nas[]' value='" . $row["dt_nas"] . "'>";
+      	          echo "</td>";
+
+                 $sql =  "SELECT codice_PS, comuni.nome, sigla 
+                               FROM   comuni, province
+      	                        WHERE  UCASE('" . $conn->real_escape_string($row["luogo_nascita"]) . "') LIKE CONCAT(UCASE(comuni.nome),'%')
+      	                        AND     comuni.id_provincia = province.id
+      	                        AND     (SELECT codice_catastale FROM angrafica WHERE id = " . $row["id"] . ") IS NOT NULL";
+
+              //  if($debug)
+                    echo "$fname: SQL (Luogo nascita) $sql<br>";
+      	          $res = $conn->query($sql);
+
+      	          if($res->num_rows == 0) {
+      	          	echo "<td class='ps' style='border-style: solid; border-width: 2px; border-color: red;'>";
+      	          	echo htmlentities($row["luogo_nascita"], $defCharsetFlags, $defCharset) . "</td>";
+      	          	$sigla='  ';
+      	          	echo "<input type='hidden' name='PS_comuni[]' value=' '>";
+      	          	$stat='CK';
+      	             $ctrError++;
+      	          }
+      	          else {
+      	          	$r = $res->fetch_assoc();
+      	          	
+      	          	if(strlen($r["nome"]) < (strlen($row["luogo_nascita"]) - 5)) { // Not valid
+      	          	   echo "<td class='ps' style='border-style: solid; border-width: 2px; border-color: red;'>";
+      	          	   echo htmlentities($row["luogo_nascita"], $defCharsetFlags, $defCharset) . "</td>";
+      	          	   $sigla='  ';
+      	          	   echo "<input type='hidden' name='PS_comuni[]' value=' '>";
+      	          	   $stat='CK';
+      	                $ctrError++;
+      	          	   }
+      	          	else {
+      	          	   echo "<td class='ps' style='border-style: solid; border-width: 1px; border-color: green;'>" . htmlentities($r["nome"],$defCharsetFlags, $defCharset) . "</td>";
+      	          	   $sigla = $r["sigla"];
+      	          	   echo "<input type='hidden' name='PS_comuni[]' value='" . $r["codice_PS"] ."'>";
+      	              }
+      	          }
+                if(rtrim($sigla))     	          
+      	              echo "<td class='ps' style='text-align:center; border-style: solid; border-width: 1px; border-color: green;'>";
+      	          else {
+      	             echo "<td class='ps' style='text-align: center; border-style: solid; border-width: 2px; border-color: red;'>";
+      	             $stat = 'CK';
+      	             $ctrError++;
+      	            }
+      	          echo $sigla;
+      	          echo "<input type='hidden' name='PS_sigla[]' value='" . $sigla . "'>";
+      	          echo "</td>";
+
+                if($row["id_stato_nascita"] <= 0) {
+      	          	echo "<td class='ps' style='border-style: solid; border-width: 2px; border-color: red;'>";
+      	             $stat = 'CK';
+      	             $ctrError++;
+                   }
+                else 
+                   echo "<td class='ps' style='border-style: solid; border-width: 1px; border-color: green;'>";  
+
+	             $rAll = $conn->query("SELECT id, codice_PS, nazione_PS FROM PS_nazioni ORDER BY 1");
+                echo "<select class='search' name='PS_nazioni[]'>";
+                echo "<option>--- Seleziona lo Stato di nascita ---</option>";   
+      	          while($r = $rAll->fetch_assoc()) {
+      	          	       echo "<option value='" . $r["codice_PS"] ."'";
+      	          	       if($r["id"] == $row["id_stato_nascita"])
+      	          	          echo " selected";
+      	          	        echo ">" . $r["nazione_PS"] . "</option>";
+      	                 }
+      	          echo "</select></td>";
+
+                if($row["id_cittadinanza"] <= 0) {
+      	          	echo "<td class='ps' style='border-style: solid; border-width: 2px; border-color: red;'>";
+      	             $stat = 'CK';
+      	             $ctrError++;
+                   }
+                else 
+                   echo "<td class='ps' style='border-style: solid; border-width: 1px; border-color: green;'>";  
+
+      	          echo "<select class='search' name='PS_cittadinanza[]'>";
+                echo "<option>--- Seleziona la cittadinanza ---</option>";   
+      	          $rAll = $conn->query("SELECT id, codice_PS, nazione_PS FROM PS_nazioni ORDER BY 1");
+      	          while($r = $rAll->fetch_assoc()) {
+      	          	       echo "<option value='" . $r["codice_PS"] ."'";
+      	          	       if($r["id"] == $row["id_cittadinanza"])
+      	          	          echo " selected";
+      	          	        echo ">" . $r["nazione_PS"] . "</option>";
+      	                 }
+      	          echo "</select></td>";
+
+// Questi dati sono richiesti solo per il responsabile
+
+                if($index == 0) {
+                	if(rtrim($row["codice_PS"]))
+                      echo "<td class='ps' style='border-style: solid; border-width: 1px; border-color: green;'>";  
+                	else {
+       	          	echo "<td class='ps' style='border-style: solid; border-width: 2px; border-color: red;'>";
+      	                $stat = 'CK';
+      	                $ctrError++;
+      	                $ctrBlock++;
+                     }
+     	             echo $row["codice_PS"];
+      	             echo "</td>";
+
+                	if(rtrim($row["n_doc"]))
+                      echo "<td class='ps' style='border-style: solid; border-width: 1px; border-color: green;'>";  
+                	else {
+       	          	echo "<td class='ps' style='border-style: solid; border-width: 2px; border-color: red;'>";
+      	                $stat = 'CK';
+      	                $ctrError++;
+      	                $ctrBlock++;
+                     }
+      	             echo $row["n_doc"];
+      	             echo "</td>";
+      	             echo "<input type='hidden' name='PS_doc[]' value='" . $row["codice_PS"] . "'>";
+      	             echo "<input type='hidden' name='PS_n_doc[]' value='" . $row["n_doc"] . "'>";
+
+      	             $res = $conn->query("SELECT codice_PS, comuni.nome FROM comuni
+      	                                                  WHERE id = " . $row["id_luogo_rilascio"]);
+
+      	             if($res->num_rows == 0) {
+      	          	    echo "<td class='ps' style='border-style: solid; border-width: 2px; border-color: red;'></td>";
+      	          	    $stat='CK';
+      	          	    $ctrError++;
+      	          	    $ctrBlock++;
+      	          	    echo "<input type='hidden' name='PS_comuni_doc[]' value=' '>";
+      	               }
+      	             else {
+                      echo "<td class='ps' style='border-style: solid; border-width: 1px; border-color: green;'>";  
+      	          	   $r = $res->fetch_assoc();
+      	          	   echo htmlentities($r["nome"],$defCharsetFlags, $defCharset) . "</td>";
+      	          	   echo "<input type='hidden' name='PS_comuni_doc[]' value='" . $r["codice_PS"] ."'>";
+      	               }
+      	           } // Fine dei dati obbligatori per il capogruppo
+      	          else {
+      	          	echo "<input type='hidden' name='PS_doc[]' value=' '>";
+      	          	echo "<input type='hidden' name='PS_n_doc[]' value=' '>";
+      	          	echo "<input type='hidden' name='PS_comuni_doc[]' value=' '>";
+      	             echo "<td class='ps' style='border-style: solid; border-width: 1px; border-color: green;'>";
+      	             echo "Non richiesto</td>";
+      	             echo "<td class='ps' style='border-style: solid; border-width: 1px; border-color: green;'>";
+      	             echo "Non richiesto</td>";
+      	             echo "<td class='ps' style='border-style: solid; border-width: 1px; border-color: green;'>";
+      	             echo "Non richiesto</td>";
+      	             }
+      	          echo "<td class='ps'>" . $stat . "</td>";
+      	          echo "</tr>";
+      	          
+      	          $index++;
+             }
+      if($index == 0) { 
+         echo "<h1>Nessuna prenotazione trovata per il giorno selezionato</h1>";
+         }
+      else {
+      	   if($ctrBlock > 0) {
+      	   	   echo "<tr>";
+      	   	   echo "<td colspan=13>Trovati $ctrBlock errori bloccanti; verificare le anagrafiche</td>";
+      	   	   echo "</tr>";
+      	   	   
+      	      }
+      	   else {
+      	   	   if($ctrError > 0) {
+      	   	       echo "<tr>";
+      	   	       echo "<td colspan=13>Trovati $ctrError non bloccanti; selezionare i dati corretti e confermare</td>";
+      	   	       echo "</tr>";
+      	   	   	   
+      	   	   	   }
+      	   	   	}
+      	   	if($ctrBlock == 0) {
+      	       echo "<input type='hidden' name='go' value=1>";
+      	       echo "<tr><td colspan='13' align='center'><input type='submit' value='Prepara file'></td></tr>";
+      	    }
+      	   echo "</table></form>";
+      	   }
+      }
+   if($go) { // Preparo il file e aggiorno i dati in anagrafica
+      $PS_file='elencoAlloggiati' . $oggi . '.txt';
+      $PS_data='';
+      $PS_oggi = substr($oggi, 8,2) . "/" . substr($oggi, 5,2) . "/" . substr($oggi, 0,4);
+      
+      for($i_array = 0; $i_array < count($PS_tipoAlloggio); $i_array++) {
+             // Aggiorno stato di nascita
+      	      $sql = "UPDATE anagrafica SET id_stato_nascita = (SELECT id FROM PS_nazioni WHERE codice_PS =" . $PS_nazioni[$i_array].
+      	                  "), utente = '" . $conn->real_escape_string($current_user) . "' WHERE anagrafica.id = " . $IDanagrafica[$i_array];
+      	      $conn->query($sql);
+
+             // Aggiorno cittadinanza
+      	      $sql = "UPDATE anagrafica SET id_cittadinanza = (SELECT id FROM PS_nazioni WHERE codice_PS =" . $PS_cittadinanza[$i_array].
+      	                  "), utente = '" . $conn->real_escape_string($current_user) . "' WHERE anagrafica.id = " . $IDanagrafica[$i_array];
+      	      $conn->query($sql);
+
+      	      $PS_data .= $PS_tipoAlloggio[$i_array];
+      	      $PS_data .= $PS_oggi;
+      	      $PS_data .= $PS_permanenza[$i_array];
+      	      $PS_data .= str_pad($PS_cognome[$i_array], 50);
+      	      $PS_data .= str_pad($PS_nome[$i_array], 30);
+      	      $PS_data .= $PS_sesso[$i_array];
+      	      $PS_data .= $PS_data_nas[$i_array];
+      	      $PS_data .= str_pad($PS_comuni[$i_array], 9);
+      	      $PS_data .= $PS_sigla[$i_array];
+      	      $PS_data .= str_pad($PS_nazioni[$i_array], 9);
+      	      $PS_data .= str_pad($PS_cittadinanza[$i_array], 9);
+      	      $PS_data .= $PS_doc[$i_array];
+      	      $PS_data .= str_pad($PS_n_doc[$i_array], 20);
+      	      $PS_data .= str_pad($PS_comuni_doc[$i_array], 9);
+      	      $PS_data .='
+';
+      }
+    echo "<form id='ou' action='../php/saveFile.php' method='post' target='_blank'>";
+    echo "<input type='hidden' name='fileName' value = '" .$PS_file . "'>";
+    echo "<input type='hidden' name='content' value = '" . htmlspecialchars(rtrim($PS_data), $defCharsetFlags, $defCharset) . "'>";
+    echo "</form>";
+    echo "<script>document.forms['ou'].submit();</script>";
+     }
+
+?>

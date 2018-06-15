@@ -1,0 +1,66 @@
+<?php
+/****************************************************************************************************
+*
+*  Funzione che ritorna il numero di protocollo
+*
+*  @file ritorna_numero_protocollo.php
+*  @abstract Ritorna il numero di protocollo
+*  @author Luca Romano
+*  @version 1.0
+*  @time 2017-06-20
+*  @history prima versione
+*  
+*  @first 1.0
+*  @since 2017-06-20
+*  @CompatibleAppVer All
+*  @where Monza
+*
+****************************************************************************************************/
+function ritorna_numero_protocollo($conn, $sqlid_sottosezione, $sqltipo_prot) {
+   $n_protocollo = 0; 
+//
+// DO NOT EDIT ANYTHING BELOW THIS LINE!
+//
+   $sqlanno = date('Y');
+   $sql = "SELECT id, progressivo
+                FROM   numerazione_protocollo
+                WHERE id_sottosezione = " . $sqlid_sottosezione .
+              " AND     anno = " . $sqlanno .
+              " AND     codice_doc = '" . $sqltipo_prot . "'";
+ 
+   $result = $conn->query($sql);
+   
+   if($result->num_rows == 0) {  // Progressivo inesistente (cambio anno o sottosezione che non ha ancora emesso protocollo)                           
+ 
+       $n_protocollo = 1;
+
+       $sql = "INSERT INTO numerazione_protocollo VALUES(NULL," .
+                                                                                $sqlid_sottosezione . ",'" .
+                                                                                $sqltipo_prot . "'," .
+                                                                                $sqlanno . "," .
+                                                                                $n_protocollo . ", NULL, '" .
+                                                                                $_SESSION["nomeuser"] . "')";
+                                                                                
+                                                                                echo $sql;
+                                                                            
+       if(!($conn->query($sql))) {
+         	   echo mysqli_error($conn);
+         	   $n_protocollo = -1;
+            }                                                                   
+      }
+   else { // Progressivo trovato! 
+       $row = $result->fetch_assoc();
+       $n_protocollo = $row["progressivo"] + 1;
+       $sql = "UPDATE numerazione_protocollo SET progressivo = " . $n_protocollo . ",
+                                                                               utente = '" . $conn->real_escape_string($_SESSION["nomeuser"]) . "'
+                  WHERE id = " . $row["id"];
+
+       if(!($conn->query($sql))) {
+         	   echo mysqli_error($conn);
+         	   $n_protocollo = -1;
+            }                                                                   
+       }
+       
+   return($n_protocollo);
+}
+?>

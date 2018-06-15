@@ -1,0 +1,413 @@
+../php/DB_connect.php:   if ($conn->connect_error) {
+../php/DB_connect.php:        die("Connection failed: " . $conn->connect_error);
+../php/allega_file.php:if ($conn->connect_error) {
+../php/allega_file.php:    die("Connection failed: " . $conn->connect_error);
+../php/allega_file.php:                   $conn->real_escape_string($tipologia) . "', '" . 
+../php/allega_file.php:                   $conn->real_escape_string($content) . "', " . $size .  ", '" . 
+../php/allega_file.php:                   $conn->real_escape_string($utente) . "')";
+../php/allega_file.php:if(!$conn->query($sqlAdd)) {
+../php/allega_file.php:$conn->close();
+../php/carica_array.php:   $result = $conn->query($sql);
+../php/carica_array.php:             $resultO = $conn->query($sql);
+../php/default_provincia.php:   if ($conn->connect_error) {
+../php/default_provincia.php:       die("Connection failed: " . $conn->connect_error);
+../php/default_provincia.php: 	$result = $conn->query($sql);
+../php/delete_sql.php:  if ($conn->connect_error) {
+../php/delete_sql.php:    die("Connection failed: " . $conn->connect_error);
+../php/delete_sql.php:    $conn->query('begin');
+../php/delete_sql.php:    $delOK += $conn->query($deleteAtt);
+../php/delete_sql.php:        if($conn->query($deleteStm)) {
+../php/delete_sql.php:            $conn->query('commit');
+../php/delete_sql.php:            $conn->query('rollback');
+../php/delete_sql.php:            $conn->query('rollback');
+../php/delete_sql.php:    $conn->close();
+../php/disegna_menu.php:  if ($conn->connect_error) {
+../php/disegna_menu.php:    die("Connection failed: " . $conn->connect_error);
+../php/disegna_menu.php:  $result = $conn->query($sqlTotMenu);
+../php/disegna_menu.php:  $result = $conn->query($sql);
+../php/disegna_menu.php:  $result = $conn->query($sqlsottosezione);
+../php/disegna_menu.php:     $result = $conn->query($sqlMenu);
+../php/disegna_menu.php:                 $stmt = $conn->prepare($sqlSottoMenu);
+../php/disegna_menu.php:     $result = $conn->query($sql);
+../php/disegna_menu.php:   $conn->close();
+../php/disegna_tabella_costi_socio.php:  $ck = $conn->query($sql_verifyA);
+../php/disegna_tabella_costi_socio.php:  $result = $conn->query($sqlExec);
+../php/disegna_tabella_costi_socio.php:  $result = $conn->query($sql_socio);
+../php/disegna_tabella_costi_socio.php:  $result = $conn->query($sqlExec);
+../php/disegna_tabella_costi_socio.php:             $resultO = $conn->query($sqlq);
+../php/disegna_tabella_costi_socio.php:      $result = $conn->query($sql_riduzioni);
+../php/do_anagrafica_search.php:if ($conn->connect_error) 
+../php/do_anagrafica_search.php:    die("Connection failed: " . $conn->connect_error);
+../php/do_anagrafica_search.php:     	     $sqlsearch .=  " AND LOWER(anagrafica.cognome) LIKE LOWER('" . $conn->real_escape_string($sqlcognome) . "')";
+../php/do_anagrafica_search.php:     	     $sqlsearch .=  " AND LOWER(anagrafica.nome) LIKE LOWER('" . $conn->real_escape_string($sqlnome) . "')";
+../php/do_anagrafica_search.php:     	     $sqlsearch .=  " AND LOWER(anagrafica.citta) LIKE LOWER('" . $conn->real_escape_string($sqlcitta) . "')";
+../php/do_anagrafica_search.php:     	     $sqlsearch .=  " AND LOWER(anagrafica.cap) LIKE LOWER('" . $conn->real_escape_string($sqlcap) . "')";
+../php/do_anagrafica_search.php:     	    $result = $conn->query($sqlsearch);
+../php/do_anagrafica_search.php:     	$result = $conn->query($sqlExec);
+../php/emissione_ricevuta.php:  if ($conn->connect_error) {
+../php/emissione_ricevuta.php:    die("Connection failed: " . $conn->connect_error);
+../php/emissione_ricevuta.php:  $stmt = $conn->prepare($sqlselect_viaggi_attivita);
+../php/emissione_ricevuta.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/emissione_ricevuta.php:  $result = $conn->query($sqlselect_anagrafica);
+../php/emissione_ricevuta.php:$conn->close();
+../php/esporta_csv.php:if ($conn->connect_error) 
+../php/esporta_csv.php:    die("Connection failed: " . $conn->connect_error);
+../php/esporta_csv.php:    $result = $conn->query($sqlSearch);
+../php/frame_set.php:  if ($conn->connect_error) {
+../php/frame_set.php:    die("Connection failed: " . $conn->connect_error);
+../php/frame_set.php:$result = $conn->query("SELECT COUNT(*) AS tp FROM priorita");
+../php/frame_set.php:$conn->close();
+../php/gestione_anagrafica.php:  if ($conn->connect_error) {
+../php/gestione_anagrafica.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_anagrafica.php:		 $result = $conn->query($sql_select);
+../php/gestione_anagrafica.php:  $result = $conn->query($sqlselect_socio);
+../php/gestione_anagrafica.php:  $result = $conn->query($sqlselect_sesso);
+../php/gestione_anagrafica.php:  $result = $conn->query($sqlselect_comune);
+../php/gestione_anagrafica.php:  $result = $conn->query($sqlselect_comune);
+../php/gestione_anagrafica.php:  $result = $conn->query($sqlselecttipo_doc);
+../php/gestione_anagrafica.php:  $result = $conn->query($sqlselectstato_civile);
+../php/gestione_anagrafica.php:     $result = $conn->query($sqlselectsottosezione);
+../php/gestione_anagrafica.php:  $result = $conn->query($sqlselectgruppo_par);
+../php/gestione_anagrafica.php:  $result = $conn->query($sqlselectcategoria);
+../php/gestione_anagrafica.php:  $result = $conn->query($sqlselecttipo_personale);
+../php/gestione_anagrafica.php:  $result = $conn->query($sqlselectclassificazione);
+../php/gestione_anagrafica.php:  $result = $conn->query($sqlselect_professione);
+../php/gestione_anagrafica.php:  $result = $conn->query($sqlselect_titolo_studio);
+../php/gestione_anagrafica.php:  $result = $conn->query($sqlselectdisabilita);
+../php/gestione_attivita.php:  if ($conn->connect_error) {
+../php/gestione_attivita.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_attivita.php:          $result = $conn->query($sql);
+../php/gestione_attivita.php:  $result = $conn->query($sqlselect_attivita);
+../php/gestione_attivita.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/gestione_attivita.php:  $conn->close();
+../php/gestione_categoria.php:  if ($conn->connect_error) {
+../php/gestione_categoria.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_categoria.php:       $result = $conn->query($sql);
+../php/gestione_categoria.php:  $result = $conn->query($sqlselect_categoria);
+../php/gestione_categoria.php:$conn->close();
+../php/gestione_classificazione.php:  if ($conn->connect_error) {
+../php/gestione_classificazione.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_classificazione.php:       $result = $conn->query($sql);
+../php/gestione_classificazione.php:  $result = $conn->query($sqlselect_classificazione);
+../php/gestione_classificazione.php:$conn->close();
+../php/gestione_comune.php:  if ($conn->connect_error) {
+../php/gestione_comune.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_comune.php:       $result = $conn->query($sql);
+../php/gestione_comune.php:  $result = $conn->query($sqlselect_comune);
+../php/gestione_comune.php:  $result = $conn->query($sqlselect_provincia);
+../php/gestione_comune.php:$conn->close();
+../php/gestione_descrizione_pellegrinaggi.php:  if ($conn->connect_error) {
+../php/gestione_descrizione_pellegrinaggi.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_descrizione_pellegrinaggi.php:         $result = $conn->query($sql);
+../php/gestione_descrizione_pellegrinaggi.php:  $result = $conn->query($sqlselect_desp);
+../php/gestione_descrizione_pellegrinaggi.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/gestione_descrizione_pellegrinaggi.php:  $result = $conn->query($sqlSelect_luogo);
+../php/gestione_descrizione_pellegrinaggi.php:$conn->close();
+../php/gestione_disabilita.php:  if ($conn->connect_error) {
+../php/gestione_disabilita.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_disabilita.php:       $result = $conn->query($sql);
+../php/gestione_disabilita.php:  $result = $conn->query($sqlselect_disabilita);
+../php/gestione_disabilita.php:$conn->close();
+../php/gestione_gruppo.php:  if ($conn->connect_error) {
+../php/gestione_gruppo.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_gruppo.php:       $result = $conn->query($sql);
+../php/gestione_gruppo.php:  $result = $conn->query($sqlselect_gruppo);
+../php/gestione_gruppo.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/gestione_gruppo.php:$conn->close();
+../php/gestione_gruppo_par.php:  if ($conn->connect_error) {
+../php/gestione_gruppo_par.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_gruppo_par.php:       $result = $conn->query($sql);
+../php/gestione_gruppo_par.php:  $result = $conn->query($sqlselect_gruppo);
+../php/gestione_gruppo_par.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/gestione_gruppo_par.php:$conn->close();
+../php/gestione_luoghi.php:  if ($conn->connect_error) {
+../php/gestione_luoghi.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_luoghi.php:       $result = $conn->query($sql);
+../php/gestione_luoghi.php:  $result = $conn->query($sqlselect_luogo);
+../php/gestione_luoghi.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/gestione_luoghi.php:$conn->close();
+../php/gestione_mezzi_trasporto.php:  if ($conn->connect_error) {
+../php/gestione_mezzi_trasporto.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_mezzi_trasporto.php:       $result = $conn->query($sql);
+../php/gestione_mezzi_trasporto.php:  $result = $conn->query($sqlselect_mezzi);
+../php/gestione_mezzi_trasporto.php:$conn->close();
+../php/gestione_movimentazione_attivita.php:  if ($conn->connect_error) {
+../php/gestione_movimentazione_attivita.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_movimentazione_attivita.php:         $result = $conn->query($sql);
+../php/gestione_movimentazione_attivita.php:  $result = $conn->query($sqlselect_desa);
+../php/gestione_movimentazione_attivita.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/gestione_movimentazione_attivita.php:  $result = $conn->query($sqlq_attivita);
+../php/gestione_movimentazione_attivita.php:$conn->close();
+../php/gestione_password.php:if ($conn->connect_error) {
+../php/gestione_password.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_password.php:$result = $conn->query($sql);
+../php/gestione_password.php:$conn->close(); 
+../php/gestione_pellegrinaggio.php:  if ($conn->connect_error) {
+../php/gestione_pellegrinaggio.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_pellegrinaggio.php:         $result = $conn->query($sql);
+../php/gestione_pellegrinaggio.php:  $result = $conn->query($sqlselect_p);
+../php/gestione_pellegrinaggio.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/gestione_pellegrinaggio.php:  $result = $conn->query($sqlSelect_desp);
+../php/gestione_pellegrinaggio.php:  $conn->close();
+../php/gestione_professione.php:  if ($conn->connect_error) {
+../php/gestione_professione.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_professione.php:       $result = $conn->query($sql);
+../php/gestione_professione.php:  $result = $conn->query($sqlselect_professione);
+../php/gestione_professione.php:$conn->close();
+../php/gestione_riduzioni.php:  if ($conn->connect_error) {
+../php/gestione_riduzioni.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_riduzioni.php:       $result = $conn->query($sql);
+../php/gestione_riduzioni.php:  $result = $conn->query($sqlselect_riduzione);
+../php/gestione_riduzioni.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/gestione_riduzioni.php:$conn->close();
+../php/gestione_servizio.php:  if ($conn->connect_error) {
+../php/gestione_servizio.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_servizio.php:       $result = $conn->query($sql);
+../php/gestione_servizio.php:  $result = $conn->query($sqlselect_servizio);
+../php/gestione_servizio.php:$conn->close();
+../php/gestione_sezione.php:if ($conn->connect_error) {
+../php/gestione_sezione.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_sezione.php:$totResult = $conn->query("SELECT COUNT(*) AS tot FROM sezione");
+../php/gestione_sezione.php:    $result = $conn->query($sql);
+../php/gestione_sezione.php:$result = $conn->query($sqlProv);
+../php/gestione_sezione.php:$conn->close();
+../php/gestione_soci_attivita.php:  if ($conn->connect_error) {
+../php/gestione_soci_attivita.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_soci_attivita.php:  $result = $conn->query($sqlselectanno_attivita);
+../php/gestione_soci_attivita.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/gestione_soci_attivita.php:  $result = $conn->query($sqlExec);
+../php/gestione_soci_attivita.php:      $result = $conn->query($sqlselect_soci);
+../php/gestione_soci_attivita.php:$conn->close();
+../php/gestione_societa.php:if ($conn->connect_error) {
+../php/gestione_societa.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_societa.php:$totResult = $conn->query("SELECT COUNT(*) AS tot FROM societa");
+../php/gestione_societa.php:    $result = $conn->query($sql);
+../php/gestione_societa.php:$result = $conn->query($sqlProv);
+../php/gestione_societa.php:$conn->close();
+../php/gestione_sottosezione.php:if ($conn->connect_error) {
+../php/gestione_sottosezione.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_sottosezione.php:    $result = $conn->query($sql);
+../php/gestione_sottosezione.php:  $result = $conn->query($sqlselect_sottosezione);
+../php/gestione_sottosezione.php:      $result = $conn->query($sql); // Solo una riga
+../php/gestione_sottosezione.php:$result = $conn->query($sqlselect_provincia);
+../php/gestione_sottosezione.php://$conn->close();
+../php/gestione_stato_civile.php:  if ($conn->connect_error) {
+../php/gestione_stato_civile.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_stato_civile.php:       $result = $conn->query($sql);
+../php/gestione_stato_civile.php:  $result = $conn->query($sqlselect_stato_civile);
+../php/gestione_stato_civile.php:$conn->close();
+../php/gestione_tipo_documento.php:  if ($conn->connect_error) {
+../php/gestione_tipo_documento.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_tipo_documento.php:       $result = $conn->query($sql);
+../php/gestione_tipo_documento.php:  $result = $conn->query($sqlselect_tipo_doc);
+../php/gestione_tipo_documento.php:$conn->close();
+../php/gestione_tipo_personale.php:  if ($conn->connect_error) {
+../php/gestione_tipo_personale.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_tipo_personale.php:       $result = $conn->query($sql);
+../php/gestione_tipo_personale.php:  $result = $conn->query($sqlselect_tipo_personale);
+../php/gestione_tipo_personale.php:$conn->close();
+../php/gestione_titolo_studio.php:  if ($conn->connect_error) {
+../php/gestione_titolo_studio.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_titolo_studio.php:       $result = $conn->query($sql);
+../php/gestione_titolo_studio.php:  $result = $conn->query($sqlselect_titolo_studio);
+../php/gestione_titolo_studio.php:$conn->close();
+../php/gestione_utenti.php:  if ($conn->connect_error) {
+../php/gestione_utenti.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_utenti.php:  if ($conn->connect_error) {
+../php/gestione_utenti.php:    die("Connection failed: " . $conn->connect_error);
+../php/gestione_utenti.php:       $result = $conn->query($sql);
+../php/gestione_utenti.php:  $result = $conn->query($sqlselect_utenti);
+../php/gestione_utenti.php:  $result = $conn->query($sqlselect_tipo);
+../php/gestione_utenti.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/gestione_utenti.php:$conn->close();
+../php/importa_comuni.php:  if ($conn->connect_error) {
+../php/importa_comuni.php:    die("Connection failed: " . $conn->connect_error);
+../php/importa_comuni.php:	    $conn->query("begin");
+../php/importa_comuni.php:                 $result = $conn->query($sql);
+../php/importa_comuni.php:                 if(!$conn->query($sql)) { // Inserimento KO
+../php/importa_comuni.php:                    $conn->query("rollback");
+../php/importa_comuni.php:                    $conn->query("commit");
+../php/importa_viaggi.php:  if ($conn->connect_error) {
+../php/importa_viaggi.php:    die("Connection failed: " . $conn->connect_error);
+../php/importa_viaggi.php:	    $conn->query("begin");
+../php/importa_viaggi.php:                 $result = $conn->query($sql);
+../php/importa_viaggi.php:                 $result = $conn->query($sql);
+../php/importa_viaggi.php:                                                                            $cod_socio . ", '" . $conn->real_escape_string($codice_tra) . "', " .
+../php/importa_viaggi.php:                                                                            $costo_rid . ", '" . $conn->real_escape_string($codice_altri) . "', '" .
+../php/importa_viaggi.php:                                                                            $conn->real_escape_string($costo_alt) . "', '" . $conn->real_escape_string($cod_serv) .
+../php/importa_viaggi.php:                 if(!$conn->query($sql)) { // Inserimento KO
+../php/importa_viaggi.php:                    $conn->query("rollback");
+../php/importa_viaggi.php:                    $conn->query("commit");
+../php/importa_viaggi_da_tabella.php:  if ($conn->connect_error) {
+../php/importa_viaggi_da_tabella.php:    die("Connection failed: " . $conn->connect_error);
+../php/importa_viaggi_da_tabella.php: $result = $conn->query($sql);
+../php/inserisci_e_stampa.php:  if ($conn->connect_error) {
+../php/inserisci_e_stampa.php:    die("Connection failed: " . $conn->connect_error);
+../php/inserisci_e_stampa.php:                  $conn->query('begin');
+../php/inserisci_e_stampa.php:                                                                                     $conn->real_escape_string($sqlcausale) . "'," .
+../php/inserisci_e_stampa.php:                                                                                     $conn->real_escape_string($current_user) . "')";
+../php/inserisci_e_stampa.php:                      if(!($conn->query($sqlRice))) {// OPS!
+../php/inserisci_e_stampa.php:                         $conn->query('rollback');               
+../php/inserisci_e_stampa.php:                         $conn->query('commit');
+../php/insert_attivita_costi.php:  if ($conn->connect_error) {
+../php/insert_attivita_costi.php:    die("Connection failed: " . $conn->connect_error);
+../php/insert_attivita_costi.php:                 	                $valueList .= " PASSWORD('" . $conn->real_escape_string($value) . "'), ";
+../php/insert_attivita_costi.php:                 	                $updateStm .= " PASSWORD('" . $conn->real_escape_string($value) . "'), ";
+../php/insert_attivita_costi.php:                 	                      $valueList .= "UPPER('" . $conn->real_escape_string($value) . "'), ";
+../php/insert_attivita_costi.php:                 	                      $updateStm .= "UPPER('" . $conn->real_escape_string($value) . "'), ";
+../php/insert_attivita_costi.php:                 	                      $valueList .= "'" . $conn->real_escape_string($value) . "', ";
+../php/insert_attivita_costi.php:                 	                      $updateStm .= "'" . $conn->real_escape_string($value) . "', ";
+../php/insert_attivita_costi.php:    $updateStm .= "utente = '" . $conn->real_escape_string($current_user). "'";
+../php/insert_attivita_costi.php:    $conn->query("begin");         
+../php/insert_attivita_costi.php:    if($conn->query($fQuery)) { // Inserimento/aggiornamento OK
+../php/insert_attivita_costi.php:          $sqlID = $conn->insert_id; // Prendo id della riga per caricare i costi
+../php/insert_attivita_costi.php:        	                    VALUES(" . $sqlID . ", 0 , '" . $sqltipo . "', '" . $conn->real_escape_string($sqltxt) . "', " .
+../php/insert_attivita_costi.php:        	                    $sqlcosti[$index][2] . ",'" . $conn->real_escape_string($current_user) . "')";
+../php/insert_attivita_costi.php:                   if($conn->query($sql)) { // Inserimento OK
+../php/insert_attivita_costi.php:                       $sqlIDParent = $conn->insert_id; // Prendo id della riga per caricare i costi
+../php/insert_attivita_costi.php:        	                         VALUES(" . $sqlID . ", " . $sqlIDParent . ", '" . $sqltipo . "', '" . $conn->real_escape_string($sqltxt) . "', " .
+../php/insert_attivita_costi.php:        	                         $sqlcosti[$index][$indexA][2] . ",'" . $conn->real_escape_string($current_user) . "')";
+../php/insert_attivita_costi.php:                        if($conn->query($sql)) { // Inserimento OK
+../php/insert_attivita_costi.php:                           $arrayAlive[$iArrayAlive] = $conn->insert_id;
+../php/insert_attivita_costi.php:             if(!$conn->query($deleteStm)) { // Cancellazione KO
+../php/insert_attivita_costi.php:                $conn->query("rollback");  
+../php/insert_attivita_costi.php:     $conn->query("commit");  
+../php/insert_attivita_costi.php:        $conn->query("rollback");  
+../php/insert_attivita_costi.php:        $conn->query("commit");  
+../php/insert_attivita_costi.php:        $conn->query("rollback");  
+../php/insert_attivita_costi.php:  $conn->close();
+../php/insert_attivita_detail.php:  if ($conn->connect_error) {
+../php/insert_attivita_detail.php:    die("Connection failed: " . $conn->connect_error);
+../php/insert_attivita_detail.php:                 	                $valueList .= " PASSWORD('" . $conn->real_escape_string($value) . "'), ";
+../php/insert_attivita_detail.php:                 	                      $valueList .= "UPPER('" . $conn->real_escape_string($value) . "'), ";
+../php/insert_attivita_detail.php:                 	                      $valueList .= "'" . $conn->real_escape_string($value) . "', ";
+../php/insert_attivita_detail.php:    $conn->query("begin");         
+../php/insert_attivita_detail.php:    if($conn->query($fQuery)) { // Inserimento OK
+../php/insert_attivita_detail.php:       $sqlID = $conn->insert_id; // Prendo id della riga per caricare i costi
+../php/insert_attivita_detail.php:        	               VALUES(" . $sqlID . ", " . $sqlQta[$index] . ", '" . $conn->real_escape_string($sqltxt) . "', " .
+../php/insert_attivita_detail.php:        	               $sqlid_riduzione . ", " . $sqlValue[$index] . ", " .$sqlValoreRid . ",'" . $conn->real_escape_string($current_user) . "')";
+../php/insert_attivita_detail.php:                if(!$conn->query($sql)) { // Inserimento KO
+../php/insert_attivita_detail.php:        $conn->query("rollback");  
+../php/insert_attivita_detail.php:        $conn->query("commit");  
+../php/insert_attivita_detail.php:        $conn->query("rollback");  
+../php/insert_attivita_detail.php:  $conn->close();
+../php/insert_sql.php:  if ($conn->connect_error) {
+../php/insert_sql.php:    die("Connection failed: " . $conn->connect_error);
+../php/insert_sql.php:                 	                $valueList .= " PASSWORD('" . $conn->real_escape_string($value) . "'), ";
+../php/insert_sql.php:                 	                      $valueList .= "UPPER('" . $conn->real_escape_string($value) . "'), ";
+../php/insert_sql.php:                 	                      $valueList .= "'" . $conn->real_escape_string($value) . "', ";
+../php/insert_sql.php:    $conn->query("begin");         
+../php/insert_sql.php:    if($conn->query($fQuery)) { // Inserimento OK
+../php/insert_sql.php:       $sqlID = $conn->insert_id; // Prendo id della riga
+../php/insert_sql.php:        $conn->query("commit");  
+../php/insert_sql.php:        $conn->query("rollback");  
+../php/insert_sql.php:  $conn->close();
+../php/login.php:  if ($conn->connect_error) {
+../php/login.php:    die("Connection failed: " . $conn->connect_error);
+../php/login.php:                  " WHERE username = \"" . $conn->real_escape_string($sqluser) . "\" 
+../php/login.php:                    AND pwd = PASSWORD('" . $conn->real_escape_string($sqlpwd) . "')";
+../php/login.php:      $result = $conn->query($sql);
+../php/menu.php:  if ($conn->connect_error) {
+../php/menu.php:    die("Connection failed: " . $conn->connect_error);
+../php/menu.php:  $result = $conn->query($sqlTotMenu);
+../php/menu.php:  $result = $conn->query($sql);
+../php/menu.php:  $result = $conn->query($sqlsottosezione);
+../php/menu.php:       $result = $conn->query($sqlMenu);
+../php/menu.php:                 $stmt = $conn->prepare($sqlSottoMenu);
+../php/menu.php:      $result = $conn->query($sql);
+../php/menu.php:<?php  $conn->close(); ?>
+../php/q_ristampa_ricevute.php:  if ($conn->connect_error) {
+../php/q_ristampa_ricevute.php:    die("Connection failed: " . $conn->connect_error);
+../php/q_ristampa_ricevute.php:  $result = $conn->query($sqlselectanno_ricevuta);
+../php/q_ristampa_ricevute.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/q_ristampa_ricevute.php:  $result = $conn->query($sqlselect_ricevute);
+../php/q_ristampa_ricevute.php:$conn->close();
+../php/q_stampa_anagrafica.php:  if ($conn->connect_error) {
+../php/q_stampa_anagrafica.php:    die("Connection failed: " . $conn->connect_error);
+../php/q_stampa_anagrafica.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/q_stampa_anagrafica.php:  $result = $conn->query($sqlselect_gruppo_par);
+../php/q_stampa_anagrafica.php:$conn->close();
+../php/q_stampa_attivita.php:  if ($conn->connect_error) {
+../php/q_stampa_attivita.php:    die("Connection failed: " . $conn->connect_error);
+../php/q_stampa_attivita.php:  $result = $conn->query($sqlselectanno_attivita);
+../php/q_stampa_attivita.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/q_stampa_attivita.php:  $result = $conn->query($sqlExec);
+../php/q_stampa_attivita.php:$conn->close();
+../php/q_stampa_viaggio.php:  if ($conn->connect_error) {
+../php/q_stampa_viaggio.php:    die("Connection failed: " . $conn->connect_error);
+../php/q_stampa_viaggio.php:  $result = $conn->query($sqlselectanno_viaggio);
+../php/q_stampa_viaggio.php:      $result = $conn->query($sqlselect_sottosezione);
+../php/q_stampa_viaggio.php:  $result = $conn->query($sqlselect_viaggio);
+../php/q_stampa_viaggio.php:$conn->close();
+../php/ritorna_db_usage.php:  if ($conn->connect_error) {
+../php/ritorna_db_usage.php:    die("Connection failed: " . $conn->connect_error);
+../php/ritorna_db_usage.php:  $result = $conn->query($sql);
+../php/ritorna_db_usage.php: $conn->close();
+../php/ritorna_numero_ricevuta.php:   $result = $conn->query($sql);
+../php/ritorna_numero_ricevuta.php:       $result = $conn->query($sqlRic);
+../php/ritorna_numero_ricevuta.php:       if(!($conn->query($sql))) {
+../php/ritorna_numero_ricevuta.php:                                                                           utente = '" . $conn->real_escape_string($_SESSION["nomeuser"]) . "'
+../php/ritorna_numero_ricevuta.php:       if(!($conn->query($sql))) {
+../php/ritorna_societa_id.php:if ($conn->connect_error) {
+../php/ritorna_societa_id.php:    die("Connection failed: " . $conn->connect_error);
+../php/ritorna_sottosezione_pertinenza.php:   $result = $conn->query($sql_sottosezione_app); // Solo una riga
+../php/ritorna_user_allowed.php:  if ($conn->connect_error) {
+../php/ritorna_user_allowed.php:    die("Connection failed: " . $conn->connect_error);
+../php/ritorna_user_allowed.php:  $result = $conn->query($sql);
+../php/ritorna_user_allowed.php: $conn->close();
+../php/ritorna_utente.php:   if ($conn->connect_error) {
+../php/ritorna_utente.php:       die("Connection failed: " . $conn->connect_error);
+../php/ritorna_utente.php: 	$result = $conn->query($sql);
+../php/search.php:     if ($conn->connect_error) 
+../php/search.php:          die("Connection failed: " . $conn->connect_error);
+../php/search.php:         $result = $conn->query($sqlselectsottosezione);
+../php/search.php:     $result = $conn->query($sqlTmp);
+../php/search.php:     $result = $conn->query($sqlselectprovincia);
+../php/search.php:     $result = $conn->query($sqlselectstato_civile);
+../php/search.php:     $result = $conn->query($sqlselectprofessione);
+../php/search.php:     $result = $conn->query($sqlselectcategoria);
+../php/search.php:     $result = $conn->query($sqlselecttipo_personale);
+../php/search.php:     $result = $conn->query($sqlselectclassificazione);
+../php/search.php:     $conn->close();
+../php/stampa_anagrafica.php:if ($conn->connect_error) {
+../php/stampa_anagrafica.php:    die("Connection failed: " . $conn->connect_error);
+../php/stampa_anagrafica.php:$resultH = $conn->query($sqlH);
+../php/stampa_anagrafica.php:          $result = $conn->query($sqlq);
+../php/stampa_anagrafica.php:$conn->close();
+../php/stampa_attivita.php:if ($conn->connect_error) {
+../php/stampa_attivita.php:    die("Connection failed: " . $conn->connect_error);
+../php/stampa_attivita.php:$resultH = $conn->query($sqlH);
+../php/stampa_attivita.php:          $result = $conn->query($sqlq);
+../php/stampa_attivita.php:	                 	  $resultVC = $conn->query($sqlExec);
+../php/stampa_attivita.php:	                 	  $resultVC = $conn->query($sqlExec);
+../php/stampa_attivita.php:	                  $resultC = $conn->query($sql);
+../php/stampa_attivita.php:$conn->close();
+../php/stampa_ricevuta.php:if ($conn->connect_error) {
+../php/stampa_ricevuta.php:    die("Connection failed: " . $conn->connect_error);
+../php/stampa_ricevuta.php:$result = $conn->query($sqlH);
+../php/stampa_ricevuta.php:$result = $conn->query($sqlH1);
+../php/stampa_ricevuta.php:$stmt = $conn->prepare($sql);
+../php/stampa_ricevuta.php:$conn->close();
+../php/stampa_viaggio.php:if ($conn->connect_error) {
+../php/stampa_viaggio.php:    die("Connection failed: " . $conn->connect_error);
+../php/stampa_viaggio.php:$resultH = $conn->query($sqlH);
+../php/stampa_viaggio.php:          $result = $conn->query($sqlq);
+../php/stampa_viaggio.php:$conn->close();
+../php/tmp.php:$conn->query('begin');
+../php/tmp.php:$conn->query('commit');
+../php/update_password.php:if ($conn->connect_error) {
+../php/update_password.php:    die("Connection failed: " . $conn->connect_error);
+../php/update_password.php:$result = $conn->query($sql);
+../php/update_password.php:    if($conn->query($sql)) {
+../php/update_password.php:$conn->close();
+../php/update_sql.php:  if ($conn->connect_error) {
+../php/update_sql.php:    die("Connection failed: " . $conn->connect_error);
+../php/update_sql.php:                 	                         $updateStm .= " PASSWORD('" . $conn->real_escape_string($value) . "'),";
+../php/update_sql.php://                 	                             $updateStm .= "'" . $conn->real_escape_string($value) . "',";
+../php/update_sql.php:                 	                      $updateStm .= "UPPER('" . $conn->real_escape_string($value) . "'),";
+../php/update_sql.php:                 	                      $updateStm .= "'" . $conn->real_escape_string($value) . "',";
+../php/update_sql.php:    $fQuery = $updateStm .= "utente = '" . $conn->real_escape_string($current_user) .  "' WHERE ID = ". $sqlID;
+../php/update_sql.php:    if($conn->query($fQuery)) {
+../php/update_sql.php:        $conn->query("commit");  
+../php/update_sql.php:        $conn->query("rollback");  
+../php/update_sql.php:    $conn->close();

@@ -1,0 +1,504 @@
+<?php
+require_once('../php/unitalsi_include_common.php');
+if(!check_key())
+   return;
+?>
+<html>
+<head>
+  <title>Risultati della ricerca</title>
+
+  <LINK href="../css/unitalsi.css" rel="stylesheet" type="text/css">
+  <link rel="apple-touch-icon" sizes="57x57" href="/images/fava/apple-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="/images/fava/apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="/images/fava/apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/images/fava/apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="/images/fava/apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="/images/fava/apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="/images/fava/apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/images/fava/apple-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/fava/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192"  href="/images/fava/android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/fava/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="/images/fava/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/fava/favicon-16x16.png">
+  <link rel="manifest" href="/images/fava/manifest.json">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-TileImage" content="/images/fava/ms-icon-144x144.png">
+  <meta name="theme-color" content="#ffffff">  
+  <meta charset="ISO-8859-1">
+  <meta name="author" content="Luca Romano" >
+  <meta http-equiv="Cache-Control" content="max-age=600">
+
+  <script type="text/javascript" src="../js/messaggi.js"></script>
+  
+</head>
+<body>
+
+<?php
+/****************************************************************************************************
+*
+*  ATTENZIONE!! LASCIARE CACHE ATTIVA
+*  Esegue la ricerca secondo i parametri impostati dall'utente
+*
+*  @file do_anagrafica_search.php
+*  @abstract Gestisce la ricerca in tabella anagrafica
+*  @author Luca Romano
+*  @version 1.1
+*  @time 2017-10-03
+*  @history prima versione
+*  
+*  @history (1.1) aggiunto campi di selezione
+*  @first 1.0
+*  @since 2017-01-31
+*  @CompatibleAppVer All
+*  @where Monza
+*  @credits http://www.iconsplace.com for the icons (32x32, png)
+*
+*
+****************************************************************************************************/
+define('NCOLSEARCH', 7);
+$debug=false;
+$fname=basename(__FILE__); 
+$defCharset = ritorna_charset(); 
+$defCharsetFlags = ritorna_default_flags(); 
+$date_format=ritorna_data_locale();
+require_once("../php/check_email_valid.php");
+if(($userid = session_check()) == 0)
+    return;
+
+$redirect='search.php';
+$intestazioneCSV = array("ID", "NOME","INDIRIZZO", "LUOGO DI NASCITA","DATA DI NASCITA", "TELEFONO","CELLULARE",
+                                          "EMAIL","CODICE FISCALE", "ID GRUPPO","ID CATEGORIA", "EFFETTIVO", "GRUPPO", "CATEGORIA");
+
+$index=0;
+$pag = 1; // Pagina corrente
+$totRows=0; // Totale righe ritornate dalla query
+$nrec = ritorna_nrec(); // righe da visualizzare per ogni pagina
+$npag=0; // Totale delle pagine in base ai dati del DB e alle righe per pagina
+$first=0; // Primo record da visualizzare
+$scorrimento=false; // Verifica se sto scorrendo le pagina
+
+$sqlcognome='';
+$sqlnome='';
+$sqlid_sesso='';
+$sqlcitta='';
+$sqlcap='';
+$sqlid_provincia=0;
+$sqlid_stato_civile=0;
+$sqlid_professione=0;
+$sqlpensionato=0;
+$sqldeceduto=0;
+$sqlsospeso;
+$sqlid_sottosezione=0;
+$sqlid_gruppo_par=0;
+$sqlid_categoria=0;
+$sqlid_tipo_personale=0;
+$sqlid_classificazione=0;
+$sqlid_disabilita=0;
+$sqlgg_nas=0;
+$sqlmm_nas=0;
+$sqlaa_nas=0;
+
+// Versione 1.1
+$sqlid_attivita=0;
+$sqlid_pellegrinaggio=0;
+// End versione 1.1
+
+$sqltimestamp='';
+$sqlPreviousClientID=0;
+
+$arrayIds = array(); // arrayIds anagrafica
+$ixArray=0;
+
+$sqlWhere=" WHERE 1"; // Where SQL clause
+
+$user_allowed = ritorna_user_allowed("../php/gestione_anagrafica.php");
+
+$extras = array('where' => '', 'do_post' => array());
+
+                                     
+$sqlsearch = "SELECT anagrafica.id, CONCAT(anagrafica.cognome,' ',anagrafica.nome) nome,
+                       CONCAT(TRIM(anagrafica.indirizzo), ' - ',
+                                     anagrafica.cap,' ',
+                                     anagrafica.citta) indirizzo,
+                                     TRIM(anagrafica.luogo_nascita) luogo_nascita,
+                                     SUBSTR(DATE_FORMAT(data_nascita, '" . $date_format . "'),1,10) dt_nas,
+                                     anagrafica.telefono,
+                                     anagrafica.cellulare,
+                                     anagrafica.email,
+                                     anagrafica.cf,
+                                     anagrafica.id_gruppo_par,
+                                     anagrafica.id_categoria,
+                                     anagrafica.socio_effettivo,
+                                     gruppo_parrocchiale.descrizione desp,
+                                     categoria.descrizione descat
+                         FROM   anagrafica LEFT JOIN gruppo_parrocchiale
+                                          ON    anagrafica.id_gruppo_par = gruppo_parrocchiale.id
+                                          LEFT JOIN categoria
+                                          ON    anagrafica.id_categoria = categoria.id";
+
+
+config_timezone();
+$current_user = ritorna_utente();
+$idSoc = ritorna_societa_id();
+
+$conn = DB_connect();
+
+// Check connection
+if ($conn->connect_error) 
+    die("Connection failed: " . $conn->connect_error);
+ 
+if ($_POST) {
+
+      if(isset($_POST["postArray"])) 
+         $working = unserialize($_POST["postArray"]);
+      else
+          $working = $_POST;
+      $extras["do_post"] = $working;
+      
+      foreach ($working as $key => $value) {
+                    $kv[] = "$key=$value";
+                    switch($key) {
+
+      		           case "pag": // Pagina selezionata durante lo scorrimento
+      					        $pag = $value;
+      					        break;
+
+      		           case "sqlsearch": // Select statement durante lo scorrimento
+      					        $sqlsearch = $value;
+      					        $scorrimento=true;
+      					        break;
+
+      		           case "totRows": // Totale righe (calcolato solo la prima volta)
+      					        $totRows = $value;
+      					        break;
+
+      		           case "cognome": // Cognome o parte del cognome
+      					        $sqlcognome = $value;
+      					        break;
+
+      		           case "nome": // Nome o parte del nome
+      					        $sqlnome = $value;
+      					        break;
+
+      		           case "sesso": // Sesso
+      					        $sqlsesso = $value;
+      					        break;
+
+      		           case "citta": // Città
+      					        $sqlcitta = $value;
+      					        break;
+
+      		           case "cap": // CAP
+      					        $sqlcap = $value;
+      					        break;
+      					        
+      		           case "id_provincia": // id_provincia
+      					        $sqlid_provincia = $value;
+      					        break;
+      					        
+      		           case "id_stato_civile": // id stato civile
+      					        $sqlid_stato_civile = $value;
+      					        break;
+
+      		           case "id_professione": // id_professione
+      					        $sqlid_professione = $value;
+      					        break;
+
+      		           case "pensionato": // Pensionato
+      					        $sqlpensionato = $value;
+      					        break;
+
+      		           case "effettivo": // Effettivo
+      					        $sqleffettivo = $value;
+      					        break;
+
+      		           case "deceduto": // Deceduto
+      					        $sqldeceduto = $value;
+      					        break;
+
+      		           case "sospeso": // Sospeso
+      					        $sqlsospeso = $value;
+      					        break;
+      					        
+      		           case "id_sottosezione": // id sottosezione
+      					        $sqlid_sottosezione = $value;
+      					        break;
+      					        
+      		           case "id_gruppo_par": // id gruppo
+      					        $sqlid_gruppo_par = $value;
+      					        break;
+      					        
+// Versione 1.1
+      		           case "id_attivita": // id attivita
+      					        $sqlid_attivita = $value;
+      					        break;
+      		           case "id_pellegrinaggio": // id pellegrinaggio
+      					        $sqlid_pellegrinaggio = $value;
+      					        break;
+// Fine Versione 1.1
+      					        
+      		           case "id_categoria": // id categoria
+      					        $sqlid_categoria = $value;
+      					        break;
+      					        
+      		           case "id_tipo_personale": // id tipo personale
+      					        $sqlid_tipo_personale = $value;
+      					        break;
+      					        
+      		           case "id_classificazione": // id classificazione
+      					        $sqlid_classificazione = $value;
+      					        break;
+      					        
+      		           case "id_disabilita": // id disabilita
+      					        $sqlid_disabilita = $value;
+      					        break;
+      					        
+      		           case "gg_nas": // giorno nascita
+      					        $sqlgg_nas = $value;
+      					        break;
+      					        
+      		           case "mm_nas": // giorno nascita
+      					        $sqlmm_nas = $value;
+      					        break;
+      					        
+      		           case "aa_nas": // anno nascita
+      					        $sqlaa_nas = $value;
+      					        break;
+      					        
+      		           case "sqlWhere": // Parametri ricerca
+      					        $sqlWhere = $value;
+      					        break;
+                    }
+        }
+
+      if (!$pag || !is_numeric($pag)) $pag = 1; 
+
+     $first = ($pag - 1) * $nrec;
+     
+     if(!$scorrimento) { // Costruisco la query solo se non in fase di scorrimento
+        if($sqlcognome != '') {
+     	     $sqlWhere .=  " AND LOWER(anagrafica.cognome) LIKE CONCAT(LOWER('" . $conn->real_escape_string($sqlcognome) . "'), '%')";
+     	   }
+     
+        if($sqlnome != '') {
+     	     $sqlWhere .=  " AND LOWER(anagrafica.nome) LIKE CONCAT(LOWER('" . $conn->real_escape_string($sqlnome) . "'), '%')";
+     	   }
+     
+        if($sqlsesso != 'T') {
+     	     $sqlWhere .=  " AND anagrafica.sesso = '" . $sqlsesso . "'";
+     	   }
+     
+        if($sqlcitta != '') {
+     	     $sqlWhere .=  " AND LOWER(anagrafica.citta) LIKE CONCAT(LOWER('" . $conn->real_escape_string($sqlcitta) . "'), '%')";
+     	   }
+      
+        if($sqlcap != '') {
+     	     $sqlWhere .=  " AND LOWER(anagrafica.cap) LIKE CONCAT(LOWER('" . $conn->real_escape_string($sqlcap) . "'), '%')";
+     	   }
+     
+        if($sqlid_provincia != 0) {
+     	     $sqlWhere .=  " AND anagrafica.id_provincia = " . $sqlid_provincia;
+     	   }
+     
+        if($sqlid_stato_civile != 0) {
+     	     $sqlWhere .=  " AND anagrafica.id_stato_civile = " . $sqlid_stato_civile;
+     	   }
+     
+        if($sqlid_professione != 0) {
+     	     $sqlWhere .=  " AND anagrafica.id_professione = " . $sqlid_professione;
+     	   }
+// Versione 1.1     
+        if($sqlid_attivita != 0) {
+     	     $sqlWhere .=  "  AND anagrafica.id IN(SELECT id_socio
+  	                                                                     FROM  attivita_detail
+  	                                                                     WHERE tipo = 'A'
+  	                                                                     AND    id_attpell = $sqlid_attivita)";
+     	   }
+     
+        if($sqlid_pellegrinaggio != 0) {
+     	     $sqlWhere .=  "  AND anagrafica.id IN(SELECT id_socio
+  	                                                                     FROM  attivita_detail
+  	                                                                     WHERE tipo = 'V'
+  	                                                                     AND    id_attpell = $sqlid_pellegrinaggio)";
+     	   }
+// Versione 1.1     
+
+        if($sqlpensionato != 'T') {
+     	     $sqlWhere .=  " AND anagrafica.pensionato = " . $sqlpensionato;
+     	   }
+     
+        if($sqleffettivo != 'T') {
+     	     $sqlWhere .=  " AND anagrafica.socio_effettivo = " . $sqleffettivo;
+     	   }
+     
+        if($sqldeceduto != 'T') {
+     	     $sqlWhere .=  " AND anagrafica.deceduto = " . $sqldeceduto;
+     	   }
+     
+        if($sqlsospeso != 'T') {
+     	     $sqlWhere .=  " AND anagrafica.sospeso = " . $sqlsospeso;
+     	   }
+      
+        if($sqlid_sottosezione != 0) {
+     	     $sqlWhere .=  " AND anagrafica.id_sottosezione = " . $sqlid_sottosezione;
+     	   }
+      
+        if($sqlid_gruppo_par != 0) {
+     	     $sqlWhere .=  " AND anagrafica.id_gruppo_par = " . $sqlid_gruppo_par;
+     	   }
+      
+        if($sqlid_categoria != 0) {
+     	     $sqlWhere .=  " AND anagrafica.id_categoria = " . $sqlid_categoria;
+     	   }
+      
+        if($sqlid_tipo_personale != 0) {
+     	     $sqlWhere .=  " AND anagrafica.id_tipo_personale = " . $sqlid_tipo_personale;
+     	   }
+      
+        if($sqlid_classificazione != 0) {
+     	     $sqlWhere .=  " AND (anagrafica.id_classificazione =  $sqlid_classificazione
+     	                               OR    anagrafica.id_classificazione1 =  $sqlid_classificazione)"; 
+     	    }
+      
+        if($sqlid_disabilita != 0) {
+     	     $sqlWhere .=  " AND anagrafica.id_disabilita > 0 ";
+     	    }
+      
+        if($sqlgg_nas != 0) {
+     	     $sqlWhere .=  " AND DAY(anagrafica.data_nascita) = " . $sqlgg_nas;
+     	    }
+      
+        if($sqlmm_nas != 0) {
+     	     $sqlWhere .=  " AND MONTH(anagrafica.data_nascita) = " . $sqlmm_nas;
+     	    }
+      
+        if($sqlaa_nas != 0) {
+     	     $sqlWhere .=  " AND YEAR(anagrafica.data_nascita) = " . $sqlaa_nas;
+     	    }
+     	   
+     	   $sqlWhere .= " ORDER BY 2";
+          $sqlsearch .= $sqlWhere;
+     }
+     
+       disegna_menu();
+       echo "<div class='background' style='position: absolute; top: 100px;'>";
+     	
+     	if($debug)
+     	    echo $fname . ": SQL SEARCH = " . $sqlsearch . '<br>';
+     	    
+       if(!$scorrimento) {
+     	    $result = $conn->query($sqlsearch);
+          $totRows =   $result->num_rows;   
+         }
+      $npag = ceil($totRows/$nrec); // calcolo il numero di pagine totali
+     	
+     	$sqlExec = $sqlsearch . " LIMIT " . $first . ", " . $nrec;
+     	if($debug)
+     	    echo $fname . ": SQL EXEC = " . $sqlExec. '<br>';
+
+     	$result = $conn->query($sqlExec);
+     	while($row = $result->fetch_assoc()) {
+            
+     		       if($index == 0) { // first row
+     			        echo "<table class='do_search'>";
+
+     			        echo "<tr>";
+     			        echo "<td colspan=" . NCOLSEARCH ." class='titolo'>Risultati della ricerca</td>";
+     			        echo "</tr>";
+     			        
+     			        echo "<tr>";
+     			        echo "<form action='../php/stampa_anagrafica.php' method='POST' target='_blank'>";
+     			        echo "<input type='hidden' name='id_sottosezione' value=" . $sqlid_sottosezione . ">";
+                     echo "<input type='hidden' name='sqlsearch' value='" . htmlspecialchars($sqlsearch, $defCharsetFlags, $defCharset) . "'>";
+     			        echo "<td class='button' colspan=" . NCOLSEARCH/2 ."><p><input type='image' src='../images/print.png'  wiidth=32 height=32 value='Stampa'</p></td>";
+     			        echo "</form>";
+
+     			        echo "<form action='../php/esporta_anagraficacsv.php' method='POST' target='_blank'>";
+                     echo "<input type='hidden' name='sqlWhere' value='" . htmlspecialchars($sqlWhere, $defCharsetFlags, $defCharset) . "'>";
+                     //echo "<input type='hidden' name='extras' value='" . htmlentities(serialize($intestazioneCSV)) . "'>";
+                     echo  "<td class='button' colspan=" . NCOLSEARCH/2 ."><input type='image' src='../images/csv.png' name='CSV' type='submit' value=1></p></td>";
+     			        echo "</form>";
+     			        echo "</tr>";
+
+     			        echo "<tr>";
+     			        echo "<td class='titolo_lista' colspan=" . NCOLSEARCH .">Trovati  " . $totRows . " risultati</td>";
+     			        echo "</tr>";
+
+                     if($npag > 1) {
+                         echo "<form action'../php/do_anagrafica_search.php' method='post'>";
+                         echo "<tr>";
+                         echo "<td class='titolo_lista' colspan=" . NCOLSEARCH .">Pagina&nbsp;";
+                         echo "<input type='hidden' name='sqlsearch' value='" . htmlspecialchars($sqlsearch, $defCharsetFlags, $defCharset) . "'>";
+     			            echo "<input type='hidden' name='totRows' value=" . $totRows . ">";
+     			            echo "<input type='hidden' name='sqlWhere' value='" .  htmlspecialchars($sqlWhere, $defCharsetFlags, $defCharset) . "'>";
+                         echo "<select dir='rtl' class='search' name='pag' onChange='this.form.submit()'>";
+                        $i=1;
+                        while($i <= $npag) {
+                                  echo "<option name='pag' value='" . $i . "'";
+                                  if($i == $pag) 
+   	    	                            echo " selected";
+
+                                  echo ">" . $i;
+                                  echo "</option>";
+                                  $i++;   	       
+                                 }
+                        echo "</select>&nbsp;di&nbsp;" . $npag . " (" . $nrec . " per pagina)</td>";
+                        echo "</tr>";
+                        echo "</form>";
+                      }
+     	             echo "</tr>";
+     	             echo "<tr>";
+                   echo "<th>&nbsp;</th>";
+                   echo "<th>Nominativo</th>";
+                   echo "<th>Indirizzo</th>";
+                   echo "<th>Data nascita</th>";
+                   echo "<th>Categoria</th>";
+                   echo "<th>Codice fiscale</th>";
+     	             echo "</tr>";
+     			     } // Fine intestazione
+     	    echo "<tr>";
+     	   
+     	   // Carico array
+     	   if($user_allowed) {
+     	       echo "<form action='../php/gestione_anagrafica.php' method='post'>";
+             echo "<input type='hidden' name='id-s' value='" .  $row["id"] . "'>";
+             echo "<td class='elementi_lista'><input name='Submit' type='image' src='../images/application_form_edit.png' title='Modifica anagrafica'></td>";
+             echo "</form>";
+/*
+     	       echo "<form action='../php/delete_sql.php' method='post'>";
+             echo "<input type='hidden' name='redirect' value='../php/search.php'>";
+             echo "<input type='hidden' name='table_name' value='anagrafica'>";
+             echo "<input type='hidden' name='id' value='" .  $row["id"] . "'>";
+             echo "<td class='elementi_lista'><input name='Submit' type='image' src='../images/delete.png' title='Elimina cliente' onclick=\"{return conferma('". ritorna_js("Cancello " . $row["nome"] . " ?") ."');}\"></form></td>";
+   */       }
+     	   else {
+     	   	    echo "<td>&nbsp;</td><td>&nbsp;</td>";
+          }
+          echo "<form action='../php/spedisci.php' method='POST'>";
+ 	       echo "<td class='print1'>" . htmlentities($row["nome"], $defCharsetFlags, $defCharset) . '</td>';
+// 	       echo "<td class='elementi_lista'>" . htmlspecialchars($row["nome"], $defCharsetFlags, $defCharset) . '</td>';
+          echo "<td class='print2'>" . htmlentities($row["indirizzo"], $defCharsetFlags, $defCharset) . '</td>';
+          echo "<td class='print2'>" . $row["dt_nas"] . "&nbsp;&nbsp;&nbsp;&nbsp; " . htmlentities($row["luogo_nascita"], $defCharsetFlags, $defCharset) . "</td>";
+          echo "<td class='print2'>" . htmlentities($row["descat"], $defCharsetFlags, $defCharset) . '</td>';
+ 	       echo "<td class='print2'>" . htmlentities($row["cf"], $defCharsetFlags, $defCharset) . '';
+ 	       
+ 	       if($row["email"] && validateEMAIL($row["email"])) { // Indirizzo mail valido
+ 	//           echo "<input type='hidden' name='nome[]' value='" . htmlspecialchars($row["nome"], $defCharsetFlags, $defCharset) . "'>";
+ 	   //        echo "&nbsp<input type='checkbox' name='mailv[]' value='" . $row["email"] . "' onClick='this.form.submit();'>";
+ 	       }
+ 	       echo "</td>";
+          echo "</tr>";
+       //   echo "<tr><td colspan='8'><input type='submit' value='Invia mail'></td></tr>";
+          echo "</form>";
+          echo "<tr><td colspan=" . NCOLSEARCH ." class='print2'><hr></td></tr>";
+          $index++;
+  
+	         	}
+ //        echo "</td>";
+      if($index > 0)
+          echo "</table>";
+      else
+        	echo "<h1>Nessun dato trovato coi parametri di ricerca</h1>";
+
+   }

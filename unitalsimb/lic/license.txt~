@@ -1,0 +1,42 @@
+#
+#       File licenza software gestione chiamate
+#
+#       Formato:
+#       <id>=<value>
+#
+#	Campi obbligatori:
+#       version <versione del software>
+#       issuedTo <nome del cliente>
+#       activationKey <chiave di attivazione>
+#       hostDB <server o indirizzo IP sul quale gira il database mysql>
+#       userDB <utente applicativo>
+#       pwdDB <password utente applicativo>
+#       nameDB <nome del database>
+#
+#
+###############################################################
+version=1.0 (Unitalsi MB)
+issuedTo=UNITALSI Monza e Brianza
+#
+#	Scade Dicembre 2017
+#
+activationKey=40227db36f9201df084839b75066bd51
+#------------------------------------------
+#	Dati accesso al DB mysql
+#------------------------------------------
+hostDB=localhost
+userDB=unitalsimb
+pwdDB=unitalsimb
+nameDB=unitalsimb
+#------------------------------------------
+#	Directory di backup
+#------------------------------------------
+backupDIR=../backup
+#------------------------------------------
+#	Spazio DB
+#------------------------------------------
+spaceDB=100000
+#------------------------------------------
+#	Supported browser (separated by ,)
+#------------------------------------------
+supportedBrowser=Google Chrome

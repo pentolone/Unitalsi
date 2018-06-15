@@ -1,0 +1,1 @@
+load data local infile '../source_data/bus_descrizione.csv' INTO TABLE mezzi_disponibili FIELDS terminated BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES (@col1, @col2, @col3, @col4,@col5) set id_sottosezione=17, descrizione=trim(@col5), capienza=@col4, id_mezzo=3;

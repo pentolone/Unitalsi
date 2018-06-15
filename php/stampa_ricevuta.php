@@ -1,0 +1,443 @@
+<?php
+/****************************************************************************************************
+*
+*  Stampa la ricevuta identificata da:
+*	- id sottosezione
+*	- anno
+*	- numero ricevuta
+*	- tipo documento (opzionale)
+*
+*  @file stampa_ricevuta.php
+*  @abstract Genera file PDF con 4 copie della ricevuta socio
+*  @author Luca Romano
+*  @version 1.0
+*  @since 2017-02-03
+*  @where Monza
+*
+*  @history
+*  2018-04-06: aggiunto periodo dal/al in stampa
+*
+****************************************************************************************************/
+require_once('../php/unitalsi_include_common.php');
+define('MYPDF_MARGIN_FOOTER', 1);
+define('MYPDF_MARGIN_BOTTOM', 1);
+// Include the main TCPDF library (search for installation path).
+//require_once('/tcpdf/tcpdf.php');
+define('EURO',chr(128));
+setlocale(LC_MONETARY, 'it_IT');
+
+$root = realpath($_SERVER["DOCUMENT_ROOT"]);
+
+include $root . "/tcpdf/tcpdf.php";
+
+$sott_app = ritorna_sottosezione_pertinenza();
+
+$debug=false;
+$fname=basename(__FILE__);
+
+$matches = array(); //create array
+$pattern = '/[A-Za-z0-9-]*./'; //regex for pattern of first host part (i.e. www)
+$pathFile="/img/";
+
+$logo='Logo_UNITALSI.jpg';
+$pdfH='';
+$date_format=ritorna_data_locale();
+$index=1;
+$emettiPerTessera=false;
+$html='';
+$bottom = array('Copia per la Presidenza Nazionale', 'Copia per la Sottosezione',
+                        'Copia per la Sezione', 'Copia per la Persona');
+
+// Check sessione
+if(!check_key())
+   return;
+
+$idSoc = ritorna_societa_id();
+$userid = session_check();
+
+$sqlid_sottosezione=0;
+$sqlanno=0;
+$sqln_ricevuta=0;
+
+// Dati risultanti dalla query
+$sqlnome='';
+$sqlindirizzo='';
+$sqlcap='';
+$sqlcitta='';
+$sqldata_nascita='';
+$sqlcf='';
+$sqlluogo_nascita='';
+$sqlid_categoria=0;
+$sqlid_gruppo_par=0;
+$sqlcausale='';
+$sqlimporto=0;
+$sqln_unitalsi='';
+$sqldata_ricevuta;
+$sqlid_attpell;
+$sql_tipo;
+$sql_tessera;
+$sql_nricevuta_tessera=0;
+
+$sqldes_cat='SCONOSCIUTA'; // descrizione categoria
+$sqldes_par='SCONOSCIUTO'; // descrizione gruppo parrocchiale
+$sqldes_pag=null;
+
+$str = $_SERVER["SERVER_NAME"]; // Get the server name
+
+preg_match($pattern, $str, $matches); //find matching pattern, it should always work (i.e. www)
+$extraDir =  rtrim($matches[0], '.');
+   
+//$logo = '../' . $extraDir . $pathFile . $logo;
+$logo = '../images/' . $logo;
+//echo $logo;
+
+// Database connect
+$conn = DB_connect();
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+if(!$_POST) { // se NO post allora chiamata errata
+   echo "Chiamata alla funzione errata";
+   return;
+}
+else {
+    $kv = array();
+    foreach ($_POST as $key => $value) {
+                  $kv[] = "$key=$value";
+      
+                   if($debug) {
+                    	 echo $fname . ": KEY = " . $key . '<br>';
+                    	 echo $fname . ": VALUE = " . $value . '<br>';
+                    	 echo $fname . ": INDEX = " . $index . '<br><br>';
+                    	}
+
+                   switch($key) {
+      		                      case "id_sottosezione": // id_sottosezione
+      				                        $sqlid_sottosezione = $value;
+      				                        break;
+
+      		                       case "anno": // anno ricevuta
+      					                      $sqlanno = $value;
+      					                       break;
+
+      		                      case "id-hidden": // numero ricevuta
+      					                    $sqln_ricevuta = $value;
+      				                        break;
+
+      		                      case "n_ricTessera": // numero ricevuta Tessera
+      					                    $sqln_ricevuta_tessera = $value;
+      				                        break;
+ 
+      		                      case "searchTxt": // campo di ricerca (ignoring)
+      				                        break;
+      	
+      		                       default: // OPS!
+      				                        echo "UNKNOWN key = ".$key;
+      				                        return;
+      				                        break;
+      				              }  
+                  $index++;
+                }
+	
+}
+
+// SQL per ricevuta
+$sql = "SELECT CONCAT(anagrafica.cognome,' ',anagrafica.nome) nome,
+                          anagrafica.indirizzo, anagrafica.cap, citta, DATE_FORMAT(data_nascita, '" . $date_format . "') dt_nas,                         
+                          cf, luogo_nascita, id_categoria, id_gruppo_par,
+                          ricevute.causale, ricevute.importo, DATE_FORMAT(ricevute.data_ricevuta,'" . $date_format . "') data_ricevuta,
+                          n_tessera_unitalsi,
+                          gruppo_parrocchiale.descrizione desp,
+                          categoria.descrizione descat,
+                          tipo_pagamento.descrizione despag,
+                          ricevute.id_attpell,
+                          ricevute.tipo,
+                          ricevute.tessera,
+                          n_ricevuta
+             FROM   anagrafica                         
+                         LEFT JOIN gruppo_parrocchiale
+                         ON    anagrafica.id_gruppo_par = gruppo_parrocchiale.id
+                         LEFT JOIN categoria
+                         ON    anagrafica.id_categoria = categoria.id,
+                         ricevute,
+                         tipo_pagamento
+             WHERE anagrafica.id = ricevute.id_socio
+             AND     tipo_pagamento.id = ricevute.id_pagamento
+             AND     ricevute.id_sottosezione = ?
+             AND     YEAR(data_ricevuta) = ?
+             AND     n_ricevuta IN(?,?)
+             ORDER BY n_ricevuta";
+
+if($debug)
+    echo $sql;
+
+// SQL per società (sede centrale)
+$sqlH = "SELECT societa.nome,
+                            CONCAT(indirizzo, ' - ',cap,' ', citta) indirizzo
+               FROM   societa";
+
+// SQL per sosottosezione
+$sqlH1 = "SELECT CONCAT(sezione.nome,' - Sottosezione di ',sottosezione.nome) nome
+                 FROM   sezione, sottosezione
+                 WHERE  sezione.id = sottosezione.id_sezione
+                 AND      sottosezione.id = " . $sqlid_sottosezione;
+
+$result = $conn->query($sqlH);
+$row = $result->fetch_assoc();
+$pdfH = $row["nome"];
+$pdfH1 = $row["indirizzo"];
+
+$result = $conn->query($sqlH1);
+$row = $result->fetch_assoc();
+$pdfH2 = $row["nome"];
+
+class MYPDF extends TCPDF {
+	private $par;
+	
+	function __construct( $par , $orientation, $unit, $format ) 
+    {
+        parent::__construct( $orientation, $unit, $format, false, 'UTF-8', false );
+
+        $this->par = $par;
+        //...
+    }
+
+    // Page footer
+    public function Footer() {
+    	  $foot = $this->par . ' Pagina ';
+        // Position at 8 mm from bottom
+        $this->SetY(-8);
+        // Set font
+        $this->SetFont('helvetica', '', '6px');
+        // Page number
+        $this->Cell(0, 10, $foot . $this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'R', 0, '', 0, false, 'T', 'M');
+    }
+}
+             
+// create new PDF document
+$pdf = new MYPDF('Stampa ricevuta (Rev 1.0) Generato il: ' . ritorna_data_attuale(),PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, false, 'UTF-8', false);
+
+// set document information
+$pdf->SetCreator(PDF_CREATOR);
+$pdf->SetAuthor('Luca Romano');
+$pdf->SetTitle('Ricevuta (pronta per la stampa)');
+$pdf->SetSubject('Ricevuta');
+$pdf->SetKeywords('Anagrafica');
+
+// set default header data
+$pdf->SetHeaderData($logo, PDF_HEADER_LOGO_WIDTH, $pdfH, $pdfH1, array(0,64,255), array(0,64,128));
+$pdf->setFooterData(array(0,64,0), array(0,64,128));
+$pdf->setPrintHeader(false);
+
+// set header and footer fonts
+$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+$pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+// set default monospaced font
+$pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+// set margins
+$pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+$pdf->SetFooterMargin(MYPDF_MARGIN_FOOTER);
+
+// set auto page breaks
+$pdf->SetAutoPageBreak(FALSE, MYPDF_MARGIN_BOTTOM);
+
+// set image scale factor
+$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+// set some language-dependent strings (optional)
+if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
+    require_once(dirname(__FILE__).'/lang/eng.php');
+    $pdf->setLanguageArray($l);
+}
+
+// ---------------------------------------------------------
+
+// set default font subsetting mode
+$pdf->setFontSubsetting(true);
+
+// Add a page
+// This method has several options, check the source code documentation for more information.
+
+// Set font to helvetica
+
+$pdf->SetFont ('helvetica', '', '12px' , '', 'default', true );
+//$pdf->Cell(80, 0, $pdfH, false, 'L', 2, 'C',false,'',0,false,'C','C');
+
+// Accedo al DB
+$stmt = $conn->prepare($sql);
+$stmt->bind_param('iiii', $sqlid_sottosezione, $sqlanno, $sqln_ricevuta, $sqln_ricevuta_tessera);
+$stmt->execute();
+$stmt->store_result();
+$stmt->bind_result($sqlnome,
+                   $sqlindirizzo,
+                   $sqlcap,
+                   $sqlcitta,
+                   $sqldata_nascita,
+                   $sqlcf,
+                   $sqlluogo_nascita,
+                   $sqlid_categoria,
+                   $sqlid_gruppo_par,
+                   $sqlcausale,
+                   $sqlimporto,
+                   $sqldata_ricevuta,
+                   $sqln_unitalsi,
+                   $sqldes_par,
+                   $sqldes_cat,
+                   $sqldes_pag,
+                   $sqlid_attpell,
+                   $sql_tipo,
+                   $sql_tessera,
+                   $sqln_ricevuta);
+
+   while($stmt->fetch()) {
+	          $html = "<table><tr>";
+	          $html .= "<td><p>" . $sqlnome . " ";
+	          $html .= $sqlindirizzo. " " .$sqlcitta. " " . $sqlcf . " ";
+	          $html .= "Nato il: " . substr($sqldata_nascita, 0, 10). " a : " . $sqlluogo_nascita. "<br>";
+	          $html .=  "</tr><tr><td colspan=\"2\"><hr></td></tr><tr>";
+	          $html .= "<td><p>categoria: " . $sqldes_cat ."</td>";
+	          $html .= "<td><p>gruppo: " . $sqldes_par ."</td></tr><tr>";
+	          $html .= "<td><p>causale: " . $sqlcausale ."</td>";
+	          $html .= "<td><p>ricevuta: " . $sqln_ricevuta ."</td></tr><tr>";
+	          $html .= "<td><p>del: " . substr($sqldata_ricevuta,0,10) ."</td>";
+	          $html .= "<td><p>importo: " . $sqlimporto ."</td></tr><tr>";
+     
+// Carico descrizione/anno attivita'/Pellegrinaggio
+             switch($sql_tipo) {
+   	                      case 'A': // Attivita
+   	                               $sql = "SELECT attivita.descrizione d,
+   	                                                        attivita_m.anno
+   	                                            FROM   attivita,
+   	                                                        attivita_m
+   	                                            WHERE attivita_m.id_attivita = attivita.id
+   	                                            AND     attivita_m.id = ". $sqlid_attpell;
+   	                               break;
+
+   	                       case 'V': // Viaggio o Pellegrinaggio
+   	                               $sql = "SELECT CONCAT(descrizione_pellegrinaggio.descrizione,'  (', 
+   	                                                         SUBSTR(DATE_FORMAT(pellegrinaggi.dal ,'" . $date_format . "'),1,10),
+   	                                                         ' - ',
+   	                                                         SUBSTR(DATE_FORMAT(pellegrinaggi.al ,'" . $date_format . "'),1,10),')') d,
+   	                                                         pellegrinaggi.anno
+   	                                            FROM   descrizione_pellegrinaggio,
+   	                                                         pellegrinaggi
+   	                                            WHERE pellegrinaggi.id_attpell = descrizione_pellegrinaggio.id
+   	                                            AND     pellegrinaggi.id = ". $sqlid_attpell;
+   	                               break;
+                   }
+             $rs = $conn->query($sql);
+             $r = $rs->fetch_assoc();
+             $des = $r["d"];
+             $anno = $r["anno"];
+             
+             if($anno != substr($sqldata_ricevuta,6,4)) { // Aggiungo anno alla descrizione
+                 $des .= " ($anno)";
+                }
+             $rs->close();
+
+              for($index=0; $index < 4; $index++) { 
+                    $y = 5;
+                    if($index > 0) 
+                        $y = $pdf->getY();
+                    
+                    if($index == 2 || $index==0) {
+                         $pdf->AddPage();
+                         $y=5;
+                        }
+                    $pdf->writeHTMLCell(30, 0, 5, $y, '<img src="' . $logo . '">'); 
+
+                    $pdf->SetFont ('helvetica', 'B', '19px' , '', 'default', true );
+                    $pdf->MultiCell(50, 0,$pdfH, false, 'L', false,0, 45,$y+2, true);
+
+                    $pdf->SetFont ('helvetica', 'B', '10px' , '', 'default', true );
+                    $pdf->MultiCell(0, 0,'Ricevuta n.   ' . sprintf('%05d',$sqln_ricevuta).'/'.substr($sqldata_ricevuta,6,4), 0, 'R', false,1, 140,'', true);
+                    $pdf->MultiCell(0, 0,'del:   ' . substr($sqldata_ricevuta,0,10), 0, 'R', false,1, 140,$pdf->getY() + 2, true);
+
+                    $pdf->SetFont ('helvetica', '', '12px' , '', 'default', true );
+                    $pdf->MultiCell(0, 0,$pdfH1, 0, 'L', false,1, 45,'', true);
+
+                    $pdf->SetFont ('helvetica', 'B', '12px' , '', 'default', true );
+                    $pdf->MultiCell(0, 0,$pdfH2, 0, 'L', false,1, 45,$pdf->getY() + 2, true);
+// Fine intestazione
+   
+                    $pdf->SetFont ('helvetica', 'B', '10px' , '', 'default', true );
+                    $pdf->MultiCell(39, 0,$sqln_unitalsi, 0, 'L', false,0, 6,$pdf->getY() + 8, true);
+
+                    $pdf->MultiCell(80, 0,$sqlnome, 0, 'L', false,0, 45,'', true);
+                    $pdf->SetFont ('helvetica', '', '10px' , '', 'default', true );
+                    $pdf->MultiCell(0, 0,'C.F.: ' . $sqlcf, 0, 'L', false,1, 140,'', true);
+   
+                    $pdf->SetFont ('helvetica', 'B', '10px' , '', 'default', true );
+                    $pdf->MultiCell(39, 0,'residente in: ', 0, 'R', false,0, 6,$pdf->getY() + 2, true);
+                    $pdf->SetFont ('helvetica', '', '10px' , '', 'default', true );
+                    $pdf->MultiCell(0, 0,$sqlindirizzo, 0, 'L', false,1, '','', true);
+   
+                    $pdf->MultiCell(39, 0,' ', 0, 'R', false,0, 6,$pdf->getY() + 2, true);
+                    $pdf->MultiCell(0, 0,$sqlcap . ' - ' . $sqlcitta, 0, 'L', false,1, '','', true);
+   
+                    $pdf->SetFont ('helvetica', 'B', '10px' , '', 'default', true );
+                    $pdf->MultiCell(39, 0,'nato/a il: ', 0, 'R', false,0, 6,$pdf->getY() + 2, true);
+                    $pdf->SetFont ('helvetica', '', '10px' , '', 'default', true );
+                    $pdf->MultiCell(100, 0,substr($sqldata_nascita,0,10). '                    a: ' . $sqlluogo_nascita, 0, 'L', false,1, '','', true);
+
+                    $pdf->SetFont ('helvetica', 'B', '10px' , '', 'default', true );
+                    $pdf->MultiCell(39, 0,'categoria: ', 0, 'R', false,0, 6,$pdf->getY() + 3, true);
+                    $pdf->SetFont ('helvetica', '', '10px' , '', 'default', true );
+                    $pdf->MultiCell(0, 0, $sqldes_cat, 0, 'L', false,1, '','', true);
+
+                    $pdf->SetFont ('helvetica', 'B', '10px' , '', 'default', true );
+                    $pdf->MultiCell(39, 0,'gruppo: ', 0, 'R', false,0, 6,$pdf->getY() + 2, true);
+                    $pdf->SetFont ('helvetica', '', '10px' , '', 'default', true );
+                    $pdf->MultiCell(0, 0, $sqldes_par, 0, 'L', false,1, '','', true);
+
+                    $pdf->SetFont ('helvetica', 'B', '10px' , '', 'default', true );
+                    $pdf->MultiCell(39, 0,'descrizione: ', 0, 'R', false,0, 6,$pdf->getY() + 3, true);
+
+                    $pdf->SetFont ('helvetica', '', '10px' , '', 'default', true );   
+                    $pdf->MultiCell(0, 0, $des, 0, 'L', false,1, '','', true);
+
+                    $pdf->SetFont ('helvetica', 'B', '10px' , '', 'default', true );
+                    $pdf->MultiCell(39, 0,'causale: ', 0, 'R', false,0, 6,$pdf->getY() + 1 , true);
+                    $pdf->SetFont ('helvetica', '', '10px' , '', 'default', true );
+                    $pdf->MultiCell(0, 0, strtoupper($sqlcausale), 0, 'L', false,1, '','', true);
+
+                    $pdf->SetFont ('helvetica', '', '18px' , '', 'default', true );
+                    $pdf->MultiCell(0, 0,'ha versato la somma di ' . EURO. ' '. money_format('%(!n',$sqlimporto), 0, 'C', false,1, 6,$pdf->getY() + 10, true);
+
+                    $pdf->SetFont ('helvetica', 'N', '9px' , '', 'default', true );
+                    $pdf->MultiCell(0, 0,"Forma di pagamento: " . $sqldes_pag, 0, 'R', false,1, 6,'', true);
+
+                    $pdf->SetFont ('helvetica', 'B', '10px' , '', 'default', true );
+                    $pdf->MultiCell(80, 0, 'FIRMA', 0, 'C', false,1, 120,$pdf->getY() + 2, true);
+
+                    $pdf->SetFont ('helvetica', '', '10px' , '', 'default', true );
+                    $pdf->MultiCell(80, 0, '_____________________________________', 0, 'C', false,1, 120,$pdf->getY() + 7, true);
+
+                    $pdf->SetFont ('helvetica', 'B', '9px' , '', 'default', true );
+                    $pdf->MultiCell(0, 0,$bottom[$index], 0, 'L', false,0, 6,'', true);
+
+                    if(($index % 2) == 0)  { // 1^ parte della pagina
+                         $pdf->SetFont ('helvetica', 'N', '1px' , '', 'default', true );
+                         $pdf->MultiCell(0, 0,' ', 0, 'L', false,0, 6,$pdf->getY()+30, true);
+                        }
+             } // Fine ciclo For
+      } // Fine ciclo While
+   if($debug)
+      echo $html;
+    else
+// ---------------------------------------------------------
+
+// Close and output PDF document
+// This method has several options, check the source code documentation for more information.
+      $pdf->Output('Documento_ricevuta.pdf', 'I');
+    
+$conn->close();
+//============================================================+
+// END OF FILE
+//============================================================+

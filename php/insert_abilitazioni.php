@@ -1,0 +1,170 @@
+<?php
+/****************************************************************************************************
+*
+*  Inserisce le abilitazioni del livello selezionato
+*
+*  @file sinsert_abilitazioni.php
+*  @abstract Inserisce le abilitazioni al livello selezionato
+*  @author Luca Romano
+*  @version 1.0
+*  @last 2017-10-08
+*  @since 2017-10-00
+*  @where Monza
+*
+*
+****************************************************************************************************/
+require_once('../php/unitalsi_include_common.php');
+
+$debug=false;
+$fname=basename(__FILE__);
+$defCharset = ritorna_charset(); 
+$defCharsetFlags = ritorna_default_flags(); 
+$date_format=ritorna_data_locale();
+$current_user = ritorna_utente();
+$index=0;
+
+$sqlid_sottosezione=0;
+$sqlid_livello=0;
+$sqlid_pagina=array(); // Array pagina
+$sql_q=array(); // Array lettura
+$sql_i=array(); // Array inserimento
+$sql_u=array(); // Array aggiornamento
+$sql_d=array(); // Array cancellazione
+
+if(!check_key())
+   return;
+
+// Database connect
+$conn = DB_connect();
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+} 
+
+if(!$_POST) { // se NO post allora chiamata errata
+   echo "Chiamata alla funzione errata";
+   return;
+}
+else {
+    $kv = array();
+    foreach ($_POST as $key => $value) {
+                   if($debug) {
+                    	 echo $fname . ": KEY = " . $key . '<br>';
+                    	 echo $fname . ": INDEX = " . $index . "<br>";
+                    	 echo $fname . ": VALUE = ";                  	 
+                    	 if(is_array($value))
+                    	     print_r($value);
+                    	 else 
+                    	     echo $value;
+                    	 echo "<br><br>";
+
+                    	}
+
+                   switch($key) {
+      		                      case "id_sottosezione": // id_sottosezione
+      				                        $sqlid_sottosezione = $value;
+      				                        break;
+
+      		                      case "id_livello": // id_livello
+      				                        $sqlid_livello = $value;
+      				                        break;
+
+      		                      case "id_pagina": // Pagina selezionata
+    	            	                     $i_array=0;
+      		                               foreach($value as $value1) {
+                                                      $sqlid_pagina[$i_array] = $value1; 	
+                                                      $i_array++;
+                 	                                  }
+      				                        break;
+
+      		                      case "q": // Lettura
+    	            	                     $i_array=0;
+      		                               foreach($value as $value1) {
+                                                      $sql_q[$i_array] = $value1; 	
+                                                      $i_array++;
+                 	                                  }
+      				                        break;
+
+      		                      case "i": // Inserimento
+    	            	                     $i_array=0;
+      		                               foreach($value as $value1) {
+                                                      $sql_i[$i_array] = $value1; 	
+                                                      $i_array++;
+                 	                                  }
+      				                        break;
+
+      		                      case "u": // Aggiornamento
+    	            	                     $i_array=0;
+      		                               foreach($value as $value1) {
+                                                      $sql_u[$i_array] = $value1; 	
+                                                      $i_array++;
+                 	                                  }
+      				                        break;
+
+      		                      case "d": // Cancellazione
+    	            	                     $i_array=0;
+      		                               foreach($value as $value1) {
+                                                      $sql_d[$i_array] = $value1; 	
+                                                      $i_array++;
+                 	                                  }
+      				                        break;
+
+      		                       default: // OPS!
+      				                        echo "UNKNOWN key = ".$key;
+      				                        return;
+      				                        break;
+      				              }
+                  $index++;
+                }
+                
+    $okCommit=true;
+    $msg=null;
+    $conn->query('begin'); // Inizio DB transaction
+    
+    $sql = "DELETE FROM abilitazione_livello
+                 WHERE id_livello = $sqlid_livello";
+
+    if($debug)
+        echo "$fname SQL Delete $sql<br>";
+
+    if(!$conn->query($sql)) {
+  	     $msg = "Dati NON cancellati ERR = " . mysqli_error($conn);
+  	     $okCommit = false;
+       }
+       
+    for($index = 0; $okCommit && $index < count($sqlid_pagina) ; $index++) {
+    	
+    	    if(($sql_q[$index] + $sql_i[$index] +$sql_u[$index] +$sql_d[$index]) > 0) { // Inserisco
+    	        $sql = "INSERT INTO abilitazione_livello(id_livello, id_pagina, q, i, u, d, utente)
+    	                     VALUES($sqlid_livello, $sqlid_pagina[$index], $sql_q[$index], 
+    	                                 $sql_i[$index], $sql_u[$index], $sql_d[$index], '" .
+    	                                 $conn->real_escape_string($current_user) . "')";
+               if($debug)
+                   echo "$fname SQL Insert $sql<br>";
+
+               if(!$conn->query($sql)) {
+  	               $msg = "Dato NON inserito ERR = " . mysqli_error($conn);
+  	               $okCommit = false;
+                 }
+    	       }
+         }
+         
+    if($okCommit) {
+        $msg='Aggiornamento effettuato correttamente'; 
+        if(!$debug) 
+           $conn->query('commit'); // Commit DB transaction
+       }
+    else
+        $conn->query('rollback'); // Rollback DB transaction
+
+    if(!$debug) {
+        echo "<form id='ok' name='ok' action='../php/gestione_abilitazioni.php' method='post'>";
+    	  echo "<input type='hidden' name='msg' value='" . $msg . "'>";
+    	  echo "<input type='hidden' name='id_sottosezione' value=$sqlid_sottosezione>";
+    	  echo "<input type='hidden' name='id_livello' value=$sqlid_livello>";
+    	  echo "</form>";
+        echo "<script type='text/javascript'>document.forms['ok'].submit();</script>"; 
+       }
+}
+?>

@@ -1,0 +1,599 @@
+body {
+	background-color: #90F5F5; 
+	background-image: url("/images/Logo_UNITALSI.png");
+	background-size: 30%;
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-attachment: fixed;
+}
+
+::-webkit-input-placeholder {
+   text-transform: none;
+}
+
+/* Highlight row (Feb 2018) */
+tr.highlight { 
+    background-color: whitesmoke;
+}
+
+/* Highlight row (Dic 2017) */
+tr.highlight:hover { 
+    background-color: #90F5F5;
+}
+input.field { /* Input normal field */
+    background-color: none;
+    vertical-align: middle;
+    margin: 0;
+    border-width: thin;
+ /*   text-transform: uppercase; */
+    font: 14px Arial, Helvetica, sans-serif;
+}
+input.required { /* Input required field */
+    background-color: #F5F6CE;
+    vertical-align: middle;
+    margin: 0;
+    border-width: thin;
+/*    text-transform: uppercase; */
+    font: 14px Arial, Helvetica, sans-serif;
+}
+
+input.disabled { /* Input disabled field (TEXT)*/
+    background-color: lightgrey;
+    vertical-align: middle;
+    margin: 0;
+    border-width: thin;
+    border: 0;
+    outline: none;
+/*    text-transform: uppercase; */
+    font: 14px Arial, Helvetica, sans-serif;
+}
+
+input.disabledn { /* Input disabled field (Number)*/
+    background-color: lightgrey;
+    vertical-align: middle;
+    margin: 0;
+    border-width: thin;
+    text-align: right;
+    border: 0;
+    outline: none;
+    font: 14px Arial, Helvetica, sans-serif;
+}
+
+input.search {
+    vertical-align: middle;
+    margin: 0;
+    border-width: thin;
+    text-align: left;
+    font: 14px Arial, Helvetica, sans-serif;
+    background-color: #CEECF5;
+}
+
+input.prezzo {
+   /* background-color: #F5F6CE;*/
+    vertical-align: middle;
+    margin: 0;
+    border-width: thin;
+   	 text-align: right;
+    font: 14px Arial, Helvetica, sans-serif;
+}
+
+input.numero {
+   /* background-color: #F5F6CE;*/
+    vertical-align: middle;
+    margin: 0;
+    border-width: thin;
+   	 text-align: right;
+    font: 14px Arial, Helvetica, sans-serif;
+}
+
+input.numeror { /* Numero obbligatorio */
+    background-color: #F5F6CE;
+    vertical-align: middle;
+    margin: 0;
+    border-width: thin;
+   	 text-align: right;
+    font: 14px Arial, Helvetica, sans-serif;
+}
+
+/* UPLOAD */
+input.upload::-webkit-file-upload-button {
+  visibility: hidden;
+}
+input.upload::before {
+  content: 'Scegli file';
+  display: inline-block;
+  background: -webkit-linear-gradient(top, #f9f9f9, #86cb8e);
+  border: 1px solid #999;
+  border-radius: 3px;
+  padding: 5px 8px;
+  outline: none;
+  white-space: nowrap;
+   -webkit-user-select: none;
+  cursor: pointer;
+  text-shadow: 1px 1px #fff;
+  font-family: "Arial";
+  font: bold 11px Arial, Helvetica, sans-serif;
+  position:relative;  
+}
+input.upload:hover::before {
+  border-color: black;
+}
+input.upload:active::before {
+  background: -webkit-linear-gradient(top, #e3e3e3, #86cb8e);
+}
+
+input.upload:active {
+  background: -webkit-linear-gradient(top, #e3e3e3, #86cb8e);
+}
+
+h1 {
+    vertical-align: middle;
+    font-style: italic;
+    font: italic 16px Arial, Helvetica, sans-serif;
+}
+
+/*-------------- SELECT ----------------*/
+
+select { /* Select not required */
+    font: 12px Arial, Helvetica, sans-serif;
+
+}
+select.required  {
+    background-color: #F5F6CE;
+    vertical-align: middle;
+    margin: 0;
+    font: 12px Arial, Helvetica, sans-serif;
+    /*font: bold 10px Arial, Helvetica, sans-serif; */
+
+}
+
+select.search {
+    font: 12px Arial, Helvetica, sans-serif;
+    vertical-align: top;
+    border-width: thin;
+    background-color: #CEECF5;
+    padding: 0;
+    margin: 0;
+}
+/*-------------- END SELECT ----------------*/
+
+textarea.required  {
+    background-color: #F5F6CE;
+    vertical-align: middle;
+    margin: 0;
+    width: 100%;
+    height: 300px;
+}
+
+textarea  {
+    background-color: white;
+    vertical-align: middle;
+    margin: 0;
+    width: 100%;
+    height: 200px;
+    font-family: "Arial";
+    font-weight: normal;
+    border-width: thin;
+    padding: 0;
+    margin: 0;
+    font-size: 11px;    
+
+}
+
+input.login_bt {
+	 background-color: lightgray;
+    font-family: "Arial";
+    font-weight: bold;
+    font: bold 14px Arial, Helvetica, sans-serif;
+}
+
+
+/* Generic Button */
+
+button {
+	 background-color: lightgray;
+    font-family: "Arial";
+    font-weight: normal;
+    font: 12px Arial, Helvetica, sans-serif;
+}
+
+/* Pulsanti menu */
+
+button.menu {
+   border: 2px solid #344752;
+   background: #b3b6bd;
+   background: -webkit-gradient(linear, left top, left bottom, from(#b3b6bd), to(#b3b6bd));
+   background: -webkit-linear-gradient(top, #b3b6bd, #b3b6bd);
+   background: -moz-linear-gradient(top, #b3b6bd, #b3b6bd);
+   background: -ms-linear-gradient(top, #b3b6bd, #b3b6bd);
+   background: -o-linear-gradient(top, #b3b6bd, #b3b6bd);
+   background-image: -ms-linear-gradient(top, #b3b6bd 0%, #b3b6bd 100%);
+   padding: 3px 6px;
+   -webkit-border-radius: 21px;
+   -moz-border-radius: 21px;
+   border-radius: 21px;
+   -webkit-box-shadow: rgba(255,255,255,0.4) 0 1px 0, inset rgba(255,255,255,0.4) 0 1px 0;
+   -moz-box-shadow: rgba(255,255,255,0.4) 0 1px 0, inset rgba(255,255,255,0.4) 0 1px 0;
+   box-shadow: rgba(255,255,255,0.4) 0 1px 0, inset rgba(255,255,255,0.4) 0 1px 0;
+   text-shadow: #7ea4bd 0 1px 0;
+   color: #474f54;
+   font-size: 11px;
+   font-family: helvetica, serif;
+   text-decoration: none;
+   vertical-align: middle;
+   }
+button.menu:hover {
+   border: 2px solid #0a3c59;
+   text-shadow: #1e4158 0 1px 0;
+   background: #61676b;
+   background: -webkit-gradient(linear, left top, left bottom, from(#61676b), to(#61676b));
+   background: -webkit-linear-gradient(top, #61676b, #61676b);
+   background: -moz-linear-gradient(top, #61676b, #61676b);
+   background: -ms-linear-gradient(top, #61676b, #61676b);
+   background: -o-linear-gradient(top, #61676b, #61676b);
+   background-image: -ms-linear-gradient(top, #61676b 0%, #61676b 100%);
+   color: #ffffff;
+   }
+button.active:active {
+   text-shadow: #1e4158 0 1px 0;
+   border: 2px solid #0a3c59;
+   background: #61676b;
+   background: -webkit-gradient(linear, left top, left bottom, from(#61676b), to(#61676b));
+   background: -webkit-linear-gradient(top, #61676b, #61676b);
+   background: -moz-linear-gradient(top, #61676b, #61676b);
+   background: -ms-linear-gradient(top, #61676b, #61676b);
+   background: -o-linear-gradient(top, #61676b, #61676b);
+   background-image: -ms-linear-gradient(top, #61676b 0%, #61676b 100%);
+   color: #fff;
+   }
+
+/* Pulsante modifica */
+
+input.md_btn {
+    position: relative;
+    padding: 6px 15px;
+    left: -8px;
+    border: 2px solid #207cca;
+    background-color: #207cca;
+    color: #fafafa;
+}
+
+input.md_btn:hover {
+	background-color: #fafafa;
+	color: #207cca;
+}
+
+/* Pulsante inserisci */
+
+input.in_btn {
+    position: relative;
+    padding: 6px 15px;
+    left: -8px;
+    border: 2px solid #207cca;
+    background-color: #207cca;
+    color: #fafafa;
+}
+
+input.in_btn:hover {
+	background-color: #fafafa;
+	color: #207cca;
+}
+
+p {
+    font-family: "Arial";
+    font-weight: normal;
+    border-width: 0;
+    padding: 0;
+    margin: 0;
+    font-size: 14px;    
+}
+
+p.alert {
+    font-weight: normal;
+    font-family: "Arial";
+    vertical-align: middle;
+    color: #fcc5a3;
+    background-color: darkblue;
+    font-size: 11px;
+    padding: 0;
+    margin: 0;
+}
+
+p.required {
+    font-weight: bold;
+    font-family: "Arial";
+    vertical-align: middle;
+    font-size: 14px;
+    padding: 0;
+    margin: 0;
+}
+
+p.print {
+    font-family: "Arial";
+    font-weight: normal;
+    border-width: 0;
+    padding: 0;
+    margin: 0;
+    font-size: 12px;    
+}
+
+
+table:not(.menu):not(.license):not(.login):not(.info) {
+   background-color: lightgray;
+   opacity: 0.9;
+   }
+
+/*table.menu {
+   background-color: none;
+   padding: 0;
+   border: 0:} */
+
+table.info {
+	background-color: none;
+}
+
+table.lista_db {
+	background-color: white;
+}
+
+table.license {
+	border-style: solid;
+	border-width: thin;
+	background-color: white;
+}
+
+table.log_dt {
+	table-layout: fixed;
+	border-style: solid;
+	border-width: thin;
+/*	font: 10px Arial, Helvetica, sans-serif; */
+}
+
+/*---------------------------
+
+		Style LOGIN
+
+----------------------------*/
+table.login {
+	table-layout: fixed;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: auto;
+	margin-bottom: auto;
+	border-style: solid;
+	border-width: medium;
+	border-color: gold;
+	background-color: lightslategrey;
+}
+
+td.login, th.login {
+    font-weight: normal;
+    font-family: "Arial";
+    vertical-align: top;
+    border-width: medium;
+    align-content: center;
+    text-align: center;
+/*    background-color: white;
+    padding: 0;
+    margin: 0;
+*/}
+
+td.tb_upd {
+	 background-color: lightgray;
+    font-family: "Arial";
+    font-weight: bold;
+    color: coral;
+    text-align: center;
+    font: bold 12px italic Arial, Helvetica, sans-serif;
+}
+
+th {
+    font-weight: bold;
+    font-family: "Arial";
+    align-content: center;
+    vertical-align: middle;
+    border-style: none;
+}
+
+td {
+    font-weight: normal;
+    font-family: "Arial";
+    align-content: center;
+    vertical-align: middle;
+    border-style: none;
+}
+
+td.log {
+   font-weight: bold;
+   font-family: "Arial";
+   vertical-align: top;
+   border-width: thin;
+	border-style: none;
+   background-color: white;
+   padding: 0;
+   margin: 0;
+}
+
+th.call_list_h {
+    font: bold 12px Arial, Helvetica, sans-serif;    
+    align-content: center;
+    vertical-align: middle;
+    border-width: thin;
+    border-style: none;
+}
+
+tr.call_list {
+    font-weight: normal;
+    font: 11px Arial, Helvetica, sans-serif;
+    /*align-content: center; */
+    vertical-align: top;
+    border-width: thin;
+    border-style: solid;
+}
+
+td.ps {
+    font: normal 13px Arial, Helvetica, sans-serif;    
+    align-content: center;
+    vertical-align: middle;
+    border-width: medium;
+    padding-right: 8;
+    white-space: nowrap;
+}
+
+
+/* Usato solo in elenco chiamate */
+td.call_list {
+    font: 11px Arial, Helvetica, sans-serif;    align-content: center;
+    vertical-align: top;
+    border-width: medium;
+}
+
+td.liste {
+    font-weight: bold;
+    font-family: "Arial";
+    align-content: center;
+    vertical-align: middle;
+    border-width: thin;
+    border-style: solid;
+}
+
+
+td.titolo {
+    font-weight: bold;
+    font-family: "Arial";
+    align-content: center;
+    text-align: center;
+    font-size: 16px;
+    border-width: medium;
+}
+
+th.ps {
+    font-weight: bold;
+    font: bold 14px Arial, Helvetica, sans-serif;    
+    align-content: center;
+    vertical-align: middle;
+    border-width: medium;
+    white-space: nowrap;
+}
+
+th.license {
+    font-weight: bold;
+    font: bold 10px Arial, Helvetica, sans-serif;    
+    align-content: center;
+    vertical-align: middle;
+    border-width: medium;
+}
+
+td.log_dt {
+	/*max-width: 250px;*/
+	word-wrap: break-word;
+	border-style: solid;
+	border-width: thin;
+   font: normal 13px Arial, Helvetica, sans-serif;
+   padding: 0;
+   margin: 0;
+}
+
+td.titolo_lista {
+    font-weight: bold;
+    font-family: "Arial";
+    align-content: center;
+    text-align: center;
+    font-size: 13px;
+    border-width: thin;
+    border-style: solid;
+
+}
+
+td.sottotitoli_lista {
+    font: bold 12px Arial, Helvetica, sans-serif;    align-content: center;
+    text-align: center;
+    align-content: center;
+}
+
+td.elementi_lista {
+	 font-weight: normal;
+    font: 11px Arial, Helvetica, sans-serif;    align-content: center;
+    vertical-align: middle;
+    border-width: thin;
+    border-style: none;
+
+    /*font-weight: normal;
+    font-family: "Arial";
+    font-size: 10px;
+    vertical-align: middle;
+    text-align: left;
+    border-style: solid;
+    border-width: thin;*/
+}
+
+td.button {
+    font-weight: normal;
+    font-family: "Arial";
+    font-size: 20px;
+    vertical-align: middle;
+    text-align: center;
+    
+}
+/* 
+	Display before print
+*/
+td.print1 {
+    font: bold 12px Helvetica, Arial, sans-serif;    align-content: center;
+    background-color: whitesmoke;
+    width: 200px;
+    overflow-x: hidden;
+    word-wrap: normal;
+    text-align: left;
+}
+
+td.print2 {
+    font: 11px Helvetica, Arial, sans-serif;    align-content: center;
+    background-color: whitesmoke;
+    text-align: left;
+}
+// Tab per anagrafica
+div.anagrafica {
+	background-color: #90F5F5; 
+    border-bottom: 1px solid #787878;
+    padding-left: 20px;}
+
+div.anagrafica ul{
+    list-style-type: none;
+   	background-color: #90F5F5; 
+    margin: 0;
+    padding: 0;}
+
+div.anagrafica li{
+    display: inline;
+    margin: 0;
+    font: 14px Arial, Helvetica, sans-serif;
+    border-bottom: 1px solid blue;
+	background-color: #90F5F5; 
+    color: #fafafa;
+    padding: 0px 0.3em;}
+
+div.anagrafica li a{
+    text-decoration: none;
+    border: 1px solid #0672C5;
+    padding: 0px 0.3em;
+	background-color: #408CC6;; 
+    color: #fafafa;}
+
+div.anagrafica li a:hover{
+    background-color: #408CC6;}
+
+div.anagrafica li.activelink a{
+    border-bottom: 1px solid blue;
+	 background-color: #406CC6;; 
+    color: #fafafa;
+    font: bold 14px Arial, Helvetica, sans-serif;
+   }
+
+div.anagrafica ul{
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;}
+// Fine tabs anagrafica
+

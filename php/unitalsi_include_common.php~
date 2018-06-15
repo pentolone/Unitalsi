@@ -1,0 +1,55 @@
+<?php
+/****************************************************************************************************
+*
+*  Inclusione che raggruppa le funzionalità richieste dall'applicativo
+*
+*  @file chiamate_include_common,php
+*  @abstract Inclusione globale
+*  @author Luca Romano
+*  @version 1.1
+*  @time 2016-07-22
+*  @history aggiunta la funziona che ritorna l'ID della società
+*  
+*  @first 1.0
+*  @since 2016-03-22
+*  @CompatibleAppVer All
+*  @where Las Palmas de Gran Canaria
+*
+*
+****************************************************************************************************/
+define("TOUPPER", false); // Se true trasforma i caratteri in maiuscolo durante inserimento e update del DB
+
+// definizione della tipologia di viaggio
+define('NONE', 0);
+define('TO',1);
+define('FROM',2);
+define('ROUNDTRIP',3);
+
+// definizione del tipo accompagnatore
+define('ACCOMPAGNATORE',1);
+define('ACCOMPAGNATO',2);
+
+require_once('../php/session_check.php');
+require_once('../php/DB_connect.php');
+require_once('../php/ritorna_charset.php');
+require_once('../php/config_timezone.php');
+require_once('../php/ritorna_session_timeout.php');
+require_once('../php/ritorna_data_locale.php');
+require_once('../php/ritorna_data_attuale.php');
+require_once('../php/ritorna_utente.php');
+require_once('../php/ritorna_versione.php');
+require_once('../php/default_provincia.php');
+require_once('../php/check_key.php');
+require_once('../php/ritorna_js.php');
+require_once('../php/ritorna_nrec.php');
+require_once('../php/ritorna_societa_id.php');
+require_once('../php/ritorna_user_allowed.php');
+require_once('../php/disegna_menu.php');
+require_once('../php/ritorna_sottosezione_pertinenza.php');
+require_once('../php/ritorna_multisottosezione.php');
+require_once('../php/check_email_valid.php');
+require_once('../php/ritorna_abilitazioni.php');
+$authMask=array();
+//require_once('../php/ricerca_socio.php');
+
+?>

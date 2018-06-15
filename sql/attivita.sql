@@ -1,0 +1,1 @@
+load data local infile '../source_data/attivita.csv' INTO TABLE attivita FIELDS terminated BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES (@col1, @col2, @col3) set codice_ori=@col1, descrizione=@col2, id_sottosezione=17;

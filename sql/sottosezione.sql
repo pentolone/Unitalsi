@@ -1,0 +1,1 @@
+load data local infile '../source_data/sottosezione.csv' INTO TABLE sottosezione FIELDS terminated BY ',' LINES TERMINATED BY '\n' (@col1, @col2) set id=@col1, id_sezione=1, nome=@col2, sede=@col2, indirizzo='-', cf_piva = '-', cap='00100', citta=@col2, id_provincia=5;

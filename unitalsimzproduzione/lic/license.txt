@@ -1,0 +1,42 @@
+#
+#       File licenza software gestione attivita'/viaggi
+#
+#       Formato:
+#       <id>=<value>
+#
+#	Campi obbligatori:
+#       version <versione del software>
+#       issuedTo <nome del cliente>
+#       activationKey <chiave di attivazione>
+#       hostDB <server o indirizzo IP sul quale gira il database mysql>
+#       userDB <utente applicativo>
+#       pwdDB <password utente applicativo>
+#       nameDB <nome del database>
+#
+#
+###############################################################
+version=1.0 (Unitalsi MB Copia produzione)
+issuedTo=UNITALSI Monza e Brianza
+#
+#	Scade Dicembre 2018
+#
+activationKey=add9953b5bef7e637d59fc8cdc071acf
+#------------------------------------------
+#	Dati accesso al DB mysql
+#------------------------------------------
+hostDB=localhost
+userDB=mzproduzione
+pwdDB=mzproduzione
+nameDB=unitalsimzproduzione
+#------------------------------------------
+#	Directory di backup
+#------------------------------------------
+backupDIR=../backup
+#------------------------------------------
+#	Spazio DB
+#------------------------------------------
+spaceDB=524288000
+#------------------------------------------
+#	Supported browser (separated by ,)
+#------------------------------------------
+supportedBrowser=Google Chrome

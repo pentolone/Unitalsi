@@ -1,0 +1,35 @@
+ling.ul {
+   list-style-type: none;
+   background-color: #339;
+   height: 36px;
+ }
+
+ling.li {
+   float: left;
+}
+
+ling.li a {
+   display: block;
+   padding: 10px 20px;
+   color: #fff;
+   text-decoration: none;
+}
+
+ling.li a:hover,
+ling.li .current {
+   background-color: #69c;
+}
+
+ling.li a:hover:after,
+ling.li .current:after {
+   content: "";
+   position: absolute;
+   bottom: -10px;
+   left: 50%;
+   margin-left: -10px;
+   width: 0;
+   height: 0;
+   border-left: 10px solid transparent;
+   border-right: 10px solid transparent;
+   border-top: 10px solid #69c;
+}

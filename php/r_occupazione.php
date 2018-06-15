@@ -1,0 +1,354 @@
+<LINK href="../css/menu_linguette.css" rel="stylesheet" type="text/css">
+
+<?php
+/****************************************************************************************************
+*
+*  Funzione che visualizza il riepilogo dell'occupazione nel periodo
+*
+*  @file r_occupazione.php
+*  @abstract Visualizza il riepilogo dell'occupazione della struttura selezionata
+*  @author Luca Romano
+*  @version 1.0
+*  @time 2017-08-08
+*  @history 1.0 prima versione
+*  
+*  @first 1.0
+*  @since 2017-08-08
+*  @CompatibleAppVer All
+*  @where Monza
+*
+*
+****************************************************************************************************/
+function r_occupazione($conn, $dal, $al, $id_struttura, $id_pell_t=0, $print=false) {
+	require_once('../php/unitalsi_include_common.php');
+	$debug=false;
+	$defCharset = ritorna_charset(); 
+   $defCharsetFlags = ritorna_default_flags(); 
+   config_timezone();
+   $current_user = ritorna_utente();
+   $date_format=ritorna_data_locale();
+   $fname=basename(__FILE__);
+   
+   $dataStart=$dal;
+   $dataEnd=$al;
+   $id_pell = array($id_pell_t);
+   
+   $color_status=array("full" => "red", "occupied" => "yellow", "free" => "green");
+
+   $gg=array(); // array dei giorni del periodo selezionato
+   $camere=array(); // array delle camere configurate per la struttura
+
+// Legenda da visualizzare
+   $htmlLegenda = "<table style='border: solid 2px;'><tr><td colspan='2'>Legenda</td></tr><tr><td style='background-color: ";
+   $htmlLegenda .= $color_status["full"] . ";padding-left: 10px;'>&nbsp;</td><td>Completa</td></tr><tr><td style='background-color: ";
+   $htmlLegenda .= $color_status["occupied"] . ";'>&nbsp;</td><td>Occupata</td></tr><tr><td style='background-color: ";
+   $htmlLegenda .= $color_status["free"] . ";'>&nbsp;</td><td>Libera</td></tr></table>";
+
+// Mese da visualizzare
+   $htmlMese = new SplFixedArray(12);
+
+// Pellegrinaggi da visualizzare
+   $htmlViaggi = new SplFixedArray(30);
+   
+   $htmlDays = array("<table>", "<table>", "<table>", "<table>",
+                                  "<table>", "<table>", "<table>", "<table>",
+                                  "<table>", "<table>", "<table>", "<table>");
+	$index=0;
+	// SQL composizione struttura
+   $sql_camere = 	"SELECT AL_piani.descrizione,
+                                          AL_piani.id,
+                                          AL_camere.codice,
+                                          AL_camere.id id_camera,
+                                          AL_camere.n_posti
+	                           FROM   AL_camere,
+	                                        AL_piani
+	                            WHERE AL_camere.id_piano = AL_piani.id
+	                            AND     AL_piani.id_struttura = $id_struttura
+	                            ORDER BY 1,2,3";
+	
+
+	// SQL della data da cui visualizzare i dati (altri sono inutili...)
+	$sql_dataMin = "SELECT MIN(dal) dal
+	                            FROM   AL_occupazione,
+	                                        AL_piani,
+	                                        AL_camere
+	                            WHERE AL_camere.id = AL_occupazione.id_camera
+	                            AND     AL_camere.id_piano = AL_piani.id
+	                            AND     AL_piani.id_struttura = $id_struttura
+	                            AND     AL_occupazione.al >= '". $dataStart . "'
+	                            AND     AL_occupazione.al <= '". $dataEnd . "'";
+	                            
+
+	// SQL della data a cui visualizzare i dati (altri sono inutili...)
+	$sql_dataMax = "SELECT MAX(al) al
+	                            FROM   AL_occupazione,
+	                                        AL_piani,
+	                                        AL_camere
+	                            WHERE AL_camere.id = AL_occupazione.id_camera
+	                            AND     AL_camere.id_piano = AL_piani.id
+	                            AND     AL_piani.id_struttura = $id_struttura
+	                            AND     AL_occupazione.dal >= '" . $dataStart . "'
+	                            AND     AL_occupazione.al <= '". $dataEnd . "'";
+
+       
+	// SQL partecipanti
+   $sqlselect_partecipanti = "SELECT COUNT(*) occupanti,
+                                                           MAX(AL_occupazione.full) full,
+                                                           AL_occupazione.dal,
+                                                           AL_occupazione.al,
+                                                           AL_occupazione.id_camera
+                                               FROM   AL_occupazione
+                                               WHERE AL_occupazione.dal >= ?  AND AL_occupazione.al 
+                                               OR        ? BETWEEN AL_occupazione.dal  AND AL_occupazione.al 
+                                               GROUP BY 3,4,5";
+   
+    $result = $conn->query($sql_dataMin);
+    $row1 = $result->fetch_assoc();    
+    if($row1["dal"]) {
+        if($row1["dal"] > $dataStart)
+            $dataStart = $row1["dal"];
+        }
+    
+    
+    $result = $conn->query($sql_dataMax);
+    $row2 = $result->fetch_assoc();    
+    if($row2["al"]) {
+        if($row2["al"] < $dataEnd)
+            $dataEnd = $row2["al"];
+        }
+    if(!$row2["al"] && !$row1["dal"]) {// Struttura libera sempre nel periodo selezionato
+        echo "<h2>Struttura libera nel periodo selezionato</h2>";
+        echo "<form action='../php/visualizza_riepilogo.php' method='post'>";
+        echo  "&nbsp;<input class='in_btn' id='btn' type='submit' value='Indietro'>";
+        echo "</form>";
+
+        return;
+       }
+
+   // Calcolo i giorni da visualizzare   
+   $diff = abs(strtotime($dataEnd) - strtotime($dataStart));
+   $days = floor($diff / (60*60*24));
+   
+   if($debug)
+      echo "$fname giorni da visualizzare = $days<br>";
+                                             
+     if($debug) {
+       echo "$fname SQL (composizione struttura) = $sql_camere<br>";
+       echo "$fname SQL (data minima) = $sql_dataMin<br>";
+       echo "$fname SQL (data massima) = $sql_dataMax<br>";
+       echo "$fname SQL (partecipanti) = $sqlselect_partecipanti<br>";
+    }
+    
+   // Carico l'array dei giorni
+   $dateToPrint = $dataStart;
+   for($i=0; $i < $days; $i++) {
+   	      $g = strtolower(date("d",strtotime($dateToPrint)));
+   	      $m = strtolower(date("m",strtotime($dateToPrint)));
+   	      $gg[$i]["day"] = $g . "/" . $m;
+   	      $gg[$i]["occupanti"] = 0;
+   	      $gg[$i]["totoccupanti"] = 0;
+    	   $gg[$i]["status"] = 'free';
+    	   
+    	   // Conto il totale occupati nel giorno
+    	   $sql = "SELECT COUNT(*) ctr
+    	                FROM AL_occupazione
+    	                WHERE '" . $dateToPrint . "'
+    	                BETWEEN dal AND DATE_SUB(al, INTERVAL 1 DAY)";
+    	                
+         if($debug) {
+             echo "$fname Intestazione giorno ($i) = " . $gg[$i]["day"] . "<br>";
+             echo "$fname SQL CONTATORE = $sql<br>";
+            }
+            
+         $dTot = $conn->query($sql);
+         $dcTot = $dTot->fetch_assoc();
+   	      $gg[$i]["totoccupanti"] = $dcTot["ctr"];
+         
+         
+
+	      $dateToPrint = date('Y-m-d', strtotime($dateToPrint . ' +1 day'));
+        }
+
+   // Carico l'array delle camere   
+    $i=0;
+    $result = $conn->query($sql_camere);
+    while($row = $result->fetch_assoc()) {
+    	       $camere[$i]["piano"] = $row["descrizione"];
+    	       $camere[$i]["id_piano"] = $row["id"];
+    	       $camere[$i]["id"] = $row["id_camera"];
+    	       $camere[$i]["camera"] = $row["codice"];
+    	       $camere[$i]["posti"] = $row["n_posti"];
+    	       $camere[$i]["occupanti"] = 0;
+    	       $camere[$i]["status"] = 'free';
+    	       $camere[$i]["giorni"] = $gg;
+    	       $i++;
+    	           	       
+    	       }
+   $result->close();
+   if($debug) {
+   	   echo "$fname Dumping arrays<br>";
+   	   var_dump($gg);
+   	   var_dump($camere);
+      }
+                                                 
+    // Ciclo per i partecipanti
+    $index=0;
+    
+    $stmt = $conn->prepare($sqlselect_partecipanti);
+    $stmt->bind_param("ss", $dataStart, $dataEnd);
+    $stmt ->execute();
+    $stmt ->store_result();
+    $stmt->bind_result($ctr,
+                                    $full,
+                                    $oDal,
+                                    $oAl,
+                                    $idRoom);
+    while($stmt->fetch()) {
+    	       if($debug) {
+    	       	 echo "$fname Occupanti = $ctr<br>";
+    	       	 echo "$fname Full = $full<br>";
+    	       	 echo "$fname Dal = $oDal<br>";
+    	       	 echo "$fname All = $oAl<br>";
+    	       	 echo "$fname ID room = $idRoom<br><br>";
+    	          }
+    	
+    	       // Prendo l'indice dell'array
+              $ix=0;
+    	        foreach($camere as $key => $camera) {
+    	        	            if ($camera["id"] == $idRoom) { // Found
+    	        	                if($debug) {
+    	        	                   echo "$fname Found index = $ix<br>";
+    	        	                   }
+    	        	                break;
+    	        	               }
+    	        	             $ix++;
+    	                     } // End foreach
+    	       // Aggiorno array
+    	        $camere[$ix]["occupanti"] += $ctr;
+ 
+ // Periodo dal   	                          
+              $i = 0;
+              $dt=$dataStart;
+              while($dt < $oDal) {
+                        $dt = date('Y-m-d', strtotime($dt. ' +1 day'));  
+                        $i++;
+                       }
+              $camere[$ix]["giorni"][$i]["occupanti"] += $ctr;
+              if(($camere[$ix]["giorni"][$i]["occupanti"] >= $camere[$ix]["posti"]) || ($full > 0))
+                  $camere[$ix]["giorni"][$i]["status"] = "full";
+              else 
+                  $camere[$ix]["giorni"][$i]["status"] = "occupied";
+
+ // Periodo al   	                          
+              $dt = date('Y-m-d', strtotime($dt. ' +1 day'));
+              $i++;
+              
+              if($dataEnd < $oAl)
+                 $oAl = $dataEnd;
+                 
+              while($dt < $oAl) {
+                        $camere[$ix]["giorni"][$i]["occupanti"] += $ctr;
+                        if(($camere[$ix]["giorni"][$i]["occupanti"] >= $camere[$ix]["posti"]) || ($full > 0))
+                           $camere[$ix]["giorni"][$i]["status"] = "full";
+                        else 
+                           $camere[$ix]["giorni"][$i]["status"] = "occupied";
+                        $dt = date('Y-m-d', strtotime($dt. ' +1 day'));  
+                        $i++;
+    	                 }
+                  
+    	       }
+    $stmt->close();
+    if($debug)
+        var_dump($camere);
+   $dalal = " dal: " . substr($dataStart,8,2) . '/' .
+                              substr($dataStart,5,2) . '/'.
+                              substr($dataStart,0,4) . ' al ' .
+                              substr($dataEnd,8,2) . '/' .
+                              substr($dataEnd,5,2) . '/'.
+                              substr($dataEnd,0,4); 
+
+/*===========================================================
+
+		Array caricati, Output HTML 
+
+===========================================================*/
+   // echo "<div style='position: fixed; overflow: auto;' >"; 
+
+    echo "<table style='overflow: auto;'>";
+// Intestazione 
+
+    echo "<thead style='display: table;
+                                    width: 100%'>";
+    echo "<tr>";
+ //   echo "<th style='width: 200px;'>&nbsp;</th>";
+    echo "<th class='titolo' style='text-align: left;' colspan=" . count($gg) . ">";
+    echo "Occupazione struttura " . $dalal ;
+    echo "</th>";
+    echo "</tr>";
+
+    echo "<tr>";
+    echo "<th style='width: 200px;'>&nbsp;</th>";
+    
+    for($i=0; $i < count($gg); $i++) {
+    	   echo "<th style='text-align: center; width: 60px;' >" . $gg[$i]["day"]. " (". $gg[$i]["totoccupanti"] . ")</th>";
+    	   
+    	   // Seleziono totale occupanti del giorno
+         }
+    echo "</tr>";
+    echo "</thead>";
+   // return;
+// Fine intestazione
+
+// Ciclo per camere/giorni
+    echo "<tbody style='display: block;
+                                     height: 30em;
+                                     overflow-y: scroll;
+                                     overflow-x: scroll;'>";
+    $piano=0;
+    for($ix=0; $ix < count($camere) ;$ix++) {
+    	    $prnRoom= '&nbsp;';
+          
+          if($camere[$ix]["id_piano"] != $piano) {
+              echo "<tr style='display: table;
+                                        table-layout:fixed;
+                                        width: 100%;'>";
+          	 echo "<td colspan=" . (count($gg)+1) . "><hr></td></tr>";
+
+              $piano =  $camere[$ix]["id_piano"];
+              $prnRoom =  " &minus;&gt; " . $camere[$ix]["piano"];
+             }
+
+          echo "<tr style='display: table;
+                                    table-layout:fixed;
+                                    width: 100%;'>";
+          
+          echo "<td style='width:200px;'><p class='required'>" . $camere[$ix]["camera"] .  "  (#" . $camere[$ix]["posti"]. ")" . $prnRoom . "</p></td>";  
+          
+          // Visualizzo i giorni      
+          for($i=0; $i < count($gg); $i++) {
+          	    echo "<td style='text-align: center; width: 60px; background-color: " . $color_status[$camere[$ix]["giorni"][$i]["status"]] . ";'>" . $camere[$ix]["giorni"][$i]["occupanti"] . "</td>";
+          	   }
+          echo "</tr>";
+         }
+
+    echo "<form action='../php/visualizza_riepilogo.php' method='post'>";
+
+    echo "<tr>";
+    echo "<td style='text-align: center;'>";
+    echo  "<input class='in_btn' id='btn' type='submit' value='Indietro'></td>";
+    echo "<td colspan=" . count($gg) . ">&nbsp;</td>";
+    echo "</tr>";
+    echo "</form>";
+  
+    echo "</table>";
+
+    if($print) {// Stampo (se richiesto)
+       echo "<form id='Print' action='../php/stampa_riepilogo_occupazione.php' target='_new' method='post'>";
+       echo "<input type='hidden' name='id_struttura' value=$id_struttura>";
+       echo "<input type='hidden' name='dalal' value='" . $dalal ."'>";
+       echo "<input type='hidden' name='camere' value='" . htmlentities(serialize($camere)) . "'>";
+       echo "</form>";
+       echo "<script>document.getElementById('Print').submit();</script>";    }
+
+}
+?>

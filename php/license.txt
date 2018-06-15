@@ -1,0 +1,43 @@
+#
+#       File licenza software gestione UNITALSI (Pilota Roma)
+#
+#       Formato:
+#       <id>=<value>
+#
+#	Campi obbligatori:
+#       version <versione del software>
+#       issuedTo <nome del cliente>
+#       activationKey <chiave di attivazione>
+#       hostDB <server o indirizzo IP sul quale gira il database mysql>
+#       userDB <utente applicativo>
+#       pwdDB <password utente applicativo>
+#       nameDB <nome del database>
+#
+#
+###############################################################
+version=2.0 (Unitalsi RM)
+issuedTo=UNITALSI Roma
+#
+#	Scade Giugno 2018
+#
+activationKey=a7e96376f8ed4b93de7d0bb174d8db88
+#------------------------------------------
+#	Dati accesso al DB mysql
+#------------------------------------------
+hostDB=localhost
+userDB=unitalsiroma
+pwdDB=ex824cg
+nameDB=unitalsiroma
+#------------------------------------------
+#	Directory di backup
+#------------------------------------------
+backupDIR=../backup
+#------------------------------------------
+#	Spazio DB
+#------------------------------------------
+spaceDB=524288000
+#------------------------------------------
+#	Supported browser (separated by ,)
+#------------------------------------------
+#supportedBrowser=Google Chrome
+#--- Fine file ---

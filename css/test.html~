@@ -1,0 +1,54 @@
+<html>
+<head>
+  <LINK href="../css/menu_linguette.css" rel="stylesheet" type="text/css">
+  <meta charset="ISO-8859-1">
+  <!-- <meta http-equiv="refresh" content="30"> -->
+  <meta name="author" content="Luca Romano" >
+  <script>
+  function setActiveDiv(i) {
+ // alert("HERE");
+    var arrayMese = document.getElementsByName("mese");
+ // alert(arrayMese);
+    arrayMese[i].style.display = "block";
+  //alert("HERE 1");
+  
+  for(ix=0; ix < arrayMese.length; ix++) {
+       if(ix != i) {
+          arrayMese[ix].style.display = "none";
+         }
+  
+      }
+alert("done");  
+  }
+  
+  </script>
+
+</head>
+<body>
+
+<div class="container">
+<ul class="ling">
+     <li class="ling" onClick="setActiveDiv(0);"><a href="#">Gennaio</a></li>
+          <li class="ling"><a href='../php/gestione_attivita.php' target='nav'>Febbraio</a></li>
+          <li class="current"><a href='../php/gestione_gruppo.php' target='nav'>Gruppi</a></li>
+          <li class="ling"><a href='../php/gestione_classificazione.php' target='nav'>Classificazione</a></li>
+          <li class="ling"><a href='../php/gestione_tecnici.php' target='nav'>Tecnici</a></li>
+          <li class="ling"><a href='../php/gestione_categoria.php' target='nav'>Categoria</a></li>
+          <li class="ling"><a href='../php/gestione_stato_civile.php' target='nav'>Stato Civile</a></li>
+          <li class="ling"><a href='../php/gestione_tipo_documento.php' target='nav'>Tipo documento</a></li>
+          <li class="ling"><a href='../php/gestione_tipo_personale.php' target='nav'>Tipologia personale</a></li>
+          <li class="ling"><a href='../php/gestione_utenti.php' target='nav'>Utenti</a></li>
+      <li class="ling"><a href='../php/gestione_categoria.php' target='nav'>Anagrafica &#9662;</a>
+           <ul class="ling"><li class="ling"><a href='../php/gestione_anagrafica.php' target='nav'>Anagrafica</a></li>
+           </ul></li>
+</ul>
+<div class="mese" name="mese">
+<p>Gennaio</p>
+</div>
+
+<div class="mese" name="mese">
+<p>Febbraio</p>
+</div>
+</div>
+
+      </body></html>
