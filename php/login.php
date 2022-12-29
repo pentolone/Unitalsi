@@ -143,7 +143,7 @@ $conn = DB_connect();
                                cellulare, email
                     FROM ". $tablename .
                   " WHERE username = \"" . $conn->real_escape_string($sqluser) . "\" 
-                    AND pwd = PASSWORD('" . $conn->real_escape_string($sqlpwd) . "')";
+		  AND pwd = CONCAT('*', UPPER(SHA1(UNHEX(SHA1('" . $conn->real_escape_string($sqlpwd) . "')))))";
 
       if($debug)
          echo $sql;
