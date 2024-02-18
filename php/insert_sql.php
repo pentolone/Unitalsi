@@ -95,7 +95,7 @@ echo "<script type='text/javascript' src='../js/messaggi.js'></script>";
       		                         $checkCF = $value;
       		                         }
       		                      if($key == 'pwd') { // PASSWORD COLUMN
-                 	                $valueList .= " PASSWORD('" . $conn->real_escape_string($value) . "'), ";
+                                      $valueList .= "CONCAT('*', UPPER(SHA1(UNHEX(SHA1('" . $conn->real_escape_string($value) . "'))))), ";
       		          	            }
       		                      else {
       		                      		if(!strlen($value)) // Se vuoto inserisco NULL
@@ -182,7 +182,7 @@ echo "<script type='text/javascript' src='../js/messaggi.js'></script>";
     	}
     }
    else {
-  	    $msg = "Dato NON inserito ERR = " . mysqli_error($conn);
+       $msg = "SQL = " . $fQuery . "Dato NON inserito ERR = " . mysqli_error($conn);
        $okCommit=false;
     } 
     if($okCommit)   
